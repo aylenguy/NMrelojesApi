@@ -14,6 +14,6 @@ namespace Domain.Interfaces
         void Delete(Admin admin);
         List<Admin> GetAll();
         Admin? GetById(int id);
-        void SaveChages();
+        void SaveChanges();
     }
 }

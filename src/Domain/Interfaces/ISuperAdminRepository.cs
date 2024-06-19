@@ -14,6 +14,6 @@ namespace Domain.Interfaces
         void Delete(SuperAdmin superAdmin);
         List<SuperAdmin> GetAll();
         SuperAdmin? GetById(int id);
-        void SaveChages();
+        void SaveChanges();
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.Model.Request
 {
-    public class ClientUpdatedRequest
+    public class ClientUpdateRequest
     {
         public string Name { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;

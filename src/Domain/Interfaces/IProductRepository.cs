@@ -14,7 +14,7 @@ namespace Domain.Interfaces
         void Delete(Product product);
         List<Product> GetAll();
         Product? GetById(int id);
-        void SaveChages();
+        void SaveChanges();
 
     }
 }

@@ -14,6 +14,6 @@ namespace Domain.Interfaces
         void Delete(Client client);
         List<Client> GetAll();
         Client? GetById(int id);
-        void SaveChages();
+        void SaveChanges();
     }
 }

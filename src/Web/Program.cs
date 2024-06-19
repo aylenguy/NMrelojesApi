@@ -1,6 +1,9 @@
 using Application.Interfaces;
 using Application.Services;
 using Domain.Interfaces;
+using Infrastructure.Data;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +21,27 @@ builder.Services.AddScoped<ISuperAdminServices, SuperAdminServices>();
 #endregion
 
 #region Repositories
+builder.Services.AddScoped<IAdminRepository, AdminRepositoryEf>();
+builder.Services.AddScoped<ISuperAdminRepository, SuperAdminRepositoryEf>();
+builder.Services.AddScoped<IClientRepository, ClientRepositoryEf>();
+builder.Services.AddScoped<IProductRepository, ProductRepositoryEf>();
+#endregion
 
+#region DataBase
+string connectionString = "Data Source=ConsultaAlumnos.db";
 
+// Configure the SQLite connection
+var connection = new SqliteConnection(connectionString);
+connection.Open();
+
+// Set journal mode to DELETE using PRAGMA statement
+using (var command = connection.CreateCommand())
+{
+    command.CommandText = "PRAGMA journal_mode = DELETE;";
+    command.ExecuteNonQuery();
+}
+
+builder.Services.AddDbContext<ApplicationContext>(dbContextOptions => dbContextOptions.UseSqlite(connection));
 #endregion
 
 

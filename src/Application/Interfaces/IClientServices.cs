@@ -13,7 +13,7 @@ namespace Application.Interfaces
     {
         Client Create (ClientCreateRequest clientCreateRequest);
         void Delete (int id);
-        void Update (int id, ClientUpdatedRequest clientUpdatedRequest);
+        void Update (int id, ClientUpdateRequest clientUpdateRequest);
         ClientDto GetById (int id);
         List<ClientDto> GetAll ();
         List<Client> GetAllFullData ();
