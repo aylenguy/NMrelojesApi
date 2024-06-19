@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.Model.Request
 {
-    internal class SuperAdminCreateRequest
+    public class SuperAdminCreateRequest
     {
         public string Name { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;

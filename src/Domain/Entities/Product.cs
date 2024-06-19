@@ -16,15 +16,7 @@ namespace Domain.Entities
         public string Description { get; set; }
         public string PhotoUrl { get; set; }
 
-        public Product(string name, int price, string size, string color, string description, string photoUrl)
-        {
-            Name = name;
-            Price = price;
-            Size = size;
-            Color = color;
-            Description = description;
-            PhotoUrl = photoUrl;
-        }
+        
 
         
         

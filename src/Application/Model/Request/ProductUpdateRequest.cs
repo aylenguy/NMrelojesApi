@@ -4,13 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Entities
+namespace Application.Model.Request
 {
-    public class Admin : User
+    public class ProductUpdateRequest
     {
-        public Admin()
-        {
-            Rol = Enums.Rol.Admin;
-        }
+        public int Price { get; set; } = 0;
+        
     }
 }

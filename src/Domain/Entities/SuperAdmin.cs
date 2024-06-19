@@ -8,5 +8,9 @@ namespace Domain.Entities
 {
     public class SuperAdmin : User
     {
+        public SuperAdmin()
+        {
+            Rol = Enums.Rol.SuperAdmin;
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -12,14 +13,15 @@ namespace Domain.Entities
     {
         public int Id { get; set; }
         [Column(TypeName = "nvarchar(100)")]
-        public string Name{ get; set; }
+        public string Name { get; set; }
         [Column(TypeName = "nvarchar(100)")]
         public string LastName { get; set; }
         [Column(TypeName = "nvarchar(100)")]
         [EmailAddress]
         public string Email { get; set; }
         [Column(TypeName = "nvarchar(100)")]
-        public string Password {  get; set; } 
+        public string Password { get; set; }
+        public Rol Rol{ get; set; }
         
 
     }
