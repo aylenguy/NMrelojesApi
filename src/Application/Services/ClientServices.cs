@@ -21,18 +21,18 @@ namespace Application.Services
             _clientRepository = clientRepository;
         }
 
-        public void Update (int id, ClientUpdatedRequest clientUpdatedRequest)
+        public void Update (int id, ClientUpdateRequest clientUpdateRequest)
         {
             var obj = _clientRepository.GetById(id);
 
             if (obj == null)
                 throw new NotFoundException(nameof(Client), id);
 
-            if (obj.Name != string.Empty) clientUpdatedRequest.Name = obj.Name;
+            if (obj.Name != string.Empty) clientUpdateRequest.Name = obj.Name;
             
-            if (obj.LastName != string.Empty) clientUpdatedRequest.LastName = obj.LastName;
+            if (obj.LastName != string.Empty) clientUpdateRequest.LastName = obj.LastName;
 
-            if (obj.Email != string.Empty) clientUpdatedRequest.Email = obj.Email;
+            if (obj.Email != string.Empty) clientUpdateRequest.Email = obj.Email;
 
             _clientRepository.Update(obj);
         }

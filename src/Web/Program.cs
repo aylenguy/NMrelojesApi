@@ -28,7 +28,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepositoryEf>();
 #endregion
 
 #region DataBase
-string connectionString = "Data Source=ConsultaAlumnos.db";
+string connectionString = "Data Source=EcommerceApiDataBase.db";
 
 // Configure the SQLite connection
 var connection = new SqliteConnection(connectionString);
@@ -41,7 +41,10 @@ using (var command = connection.CreateCommand())
     command.ExecuteNonQuery();
 }
 
-builder.Services.AddDbContext<ApplicationContext>(dbContextOptions => dbContextOptions.UseSqlite(connection));
+builder.Services.AddDbContext<ApplicationContext>(dbContextOptions =>
+{
+    dbContextOptions.UseSqlite(connection);
+});
 #endregion
 
 

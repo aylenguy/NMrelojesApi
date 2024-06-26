@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Infrastructure.Data
 {
     public class ApplicationContext : DbContext
-    {
+    {   
         public DbSet<Admin> Admin { get; set; }
 
         public DbSet<SuperAdmin> SuperAdmin { get; set; }

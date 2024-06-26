@@ -13,9 +13,7 @@ namespace Infrastructure.Data
         private readonly ApplicationContext _context;
         public AdminRepositoryEf(ApplicationContext context)
         {
-
             _context = context;
-
         }
 
         public Admin Add(Admin admin)
