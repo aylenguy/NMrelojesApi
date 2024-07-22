@@ -2,55 +2,82 @@ using Application.Interfaces;
 using Application.Services;
 using Domain.Interfaces;
 using Infrastructure.Data;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configuración de Swagger
+builder.Services.AddSwaggerGen(setupAction =>
+{
+    setupAction.AddSecurityDefinition("EcommerceApiBearerAuth", new OpenApiSecurityScheme()
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        Description = "Acá pegar el token generado al loguearse."
+    });
 
+    setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "EcommerceApiBearerAuth"
+                }
+            },
+            new List<string>()
+        }
+    });
+});
+
+// Añadir servicios al contenedor
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Configuración de Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-#region Services
-builder.Services.AddScoped<IProductServices, ProductServices>();
-builder.Services.AddScoped<IAdminServices, AdminServices>();
-builder.Services.AddScoped<ISuperAdminServices, SuperAdminServices>();
-#endregion
+// Inyección de dependencias para DbContext
+builder.Services.AddDbContext<ApplicationContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("EcommerceDBConnectionString"),
+    b => b.MigrationsAssembly("Infrastructure")));
 
-#region Repositories
+// Configuración de autenticación JWT
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["AuthenticationService:Issuer"],
+            ValidAudience = builder.Configuration["AuthenticationService:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["AuthenticationService:SecretForKey"]))
+        };
+    });
+
+// Inyección de dependencias para repositorios
 builder.Services.AddScoped<IAdminRepository, AdminRepositoryEf>();
-builder.Services.AddScoped<ISuperAdminRepository, SuperAdminRepositoryEf>();
 builder.Services.AddScoped<IClientRepository, ClientRepositoryEf>();
 builder.Services.AddScoped<IProductRepository, ProductRepositoryEf>();
-#endregion
+builder.Services.AddScoped<ISuperAdminRepository, SuperAdminRepositoryEf>();
 
-#region DataBase
-string connectionString = "Data Source=EcommerceApiDataBase.db";
-
-// Configure the SQLite connection
-var connection = new SqliteConnection(connectionString);
-connection.Open();
-
-// Set journal mode to DELETE using PRAGMA statement
-using (var command = connection.CreateCommand())
-{
-    command.CommandText = "PRAGMA journal_mode = DELETE;";
-    command.ExecuteNonQuery();
-}
-
-builder.Services.AddDbContext<ApplicationContext>(dbContextOptions =>
-{
-    dbContextOptions.UseSqlite(connection);
-});
-#endregion
-
+// Inyección de dependencias para servicios
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IAdminServices, AdminServices>();
+builder.Services.AddScoped<IClientServices, ClientServices>();
+builder.Services.AddScoped<IProductServices, ProductServices>();
+builder.Services.AddScoped<ISuperAdminServices, SuperAdminServices>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configuración del pipeline de solicitudes HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -59,6 +86,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
