@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    public class Client : User
+
+    namespace Domain.Entities
     {
-        public Client()
+        public class Client : User
         {
-            Rol = Enums.Rol.Client;
+            public ICollection<Venta>? Ventas { get; set; }
         }
     }
 }

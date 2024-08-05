@@ -1,22 +1,13 @@
 ﻿using Domain.Entities;
-using System;
+using Domain.Interface;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Interfaces
 {
-    public interface IProductRepository
+    public interface IProductRepository : IRepositoryBase<Product>
     {
-        Product Add(Product product);
-        void Update(Product product);
-        void Delete(Product product);
-        List<Product> GetAll();
         Product? GetById(int id);
-        void SaveChanges();
-
+        List<Product> GetByName(string name);
+        new List<Product> GetAll();
     }
 }
-
-

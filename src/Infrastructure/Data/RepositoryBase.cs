@@ -1,19 +1,17 @@
-﻿using Domain.Interface;
+﻿
+using Domain.Interface;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Data
-{
-    //Clase genérica, repositorio base, T es como un comodin que nos permite usarlo en todas las entidades. 
-    //Esta clase no existe hasta el momento en que se la llama a travez de otro repositorio. 
+{//Clase genérica, repositorio base, T es como un comodin que nos permite usarlo en todas las entidades. 
+ //Esta clase no existe hasta el momento en que se la llama a travez de otro repositorio. 
+ // contiene los metodos basico de un abmusing Domain.Interface;
     public class RepositoryBase<T> : IRepositoryBase<T> where T : class
     {
-        // Contexto de base de datos de Entity Framework
         private readonly DbContext _dbContext;
+
         public RepositoryBase(DbContext dbContext)
         {
             _dbContext = dbContext;

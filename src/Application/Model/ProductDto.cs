@@ -1,45 +1,36 @@
 ﻿using Domain.Entities;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ConsultaAlumnos.Application.Models;
-
-public class ProductDto
+namespace ConsultaAlumnos.Application.Models
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } 
-    public int Price { get; set; } 
-    public string Size { get; set; } 
-    public string Color { get; set; } 
-
-    public static ProductDto Create(Product product)
+    public class ProductDto
     {
-        var dto = new ProductDto();
-        dto.Id = product.Id;
-        dto.Name = product.Name;
-        dto.Description = product.Description;
-        dto.Price = product.Price;
-        dto.Size = product.Size;
-        dto.Color = product.Color;
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public string? Color { get; set; } // Permitir valores NULL
+        public int Stock { get; set; }
 
-
-        return dto;
-    }
-
-    public static List<ProductDto> CreateList(IEnumerable<Product> product)
-    {
-        List<ProductDto> listDto = [];
-        foreach (var p in product)
+        public static ProductDto Create(Product product)
         {
-            listDto.Add(Create(p));
+            return new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Price = product.Price,
+                Color = product.Color,
+                Stock = product.Stock
+            };
         }
 
-        return listDto;
+        public static List<ProductDto> CreateList(IEnumerable<Product> products)
+        {
+            var listDto = new List<ProductDto>();
+            foreach (var product in products)
+            {
+                listDto.Add(Create(product));
+            }
+            return listDto;
+        }
     }
-
 }

@@ -1,80 +1,74 @@
 ﻿using Application.Interfaces;
+using Application.Model;
 using Application.Model.Request;
 using ConsultaAlumnos.Application.Models;
 using Domain.Entities;
 using Domain.Exceptions;
 using Domain.Interfaces;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class ProductServices : IProductServices
+    public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
 
-        public ProductServices(IProductRepository productRepository)
+        public ProductService(IProductRepository productRepository)
         {
             _productRepository = productRepository;
         }
-         public List<ProductDto> GetAll()
+
+        public ProductDto GetById(int id)
+        {
+            var product = _productRepository.GetById(id)
+                          ?? throw new NotFoundException(nameof(Product), id);
+            return ProductDto.Create(product);
+        }
+
+        public List<ProductDto> GetAll()
         {
             var list = _productRepository.GetAll();
             return ProductDto.CreateList(list);
         }
 
-        public List<Product> GetAllFullData()
+        public Product Create(ProductCreateRequest productCreateRequest)
         {
-            return _productRepository.GetAll();
+            var product = new Product
+            {
+                Name = productCreateRequest.Name,
+                Price = productCreateRequest.Price,
+                Color = productCreateRequest.Color,
+                Stock = productCreateRequest.Stock
+            };
+
+            _productRepository.Add(product);
+           
+            return product;
         }
 
-        public ProductDto GetById(int id) 
-        {
-            var obj = _productRepository.GetById(id)
-                ?? throw new NotFoundException(nameof(Product), id);
-
-            var dto = ProductDto.Create(obj);
-            return dto;
-            
-        }
-        public Product Create (ProductCreateRequest productCreateRequest)
-        {
-            var obj = new Product();
-            obj.Name = productCreateRequest.Name;
-            obj.PhotoUrl = productCreateRequest.PhotoUrl;
-            obj.Description = productCreateRequest.Description;
-            obj.Price = productCreateRequest.Price;
-            obj.Size = productCreateRequest.Size;
-            obj.Color = productCreateRequest.Color;
-
-            return _productRepository.Add(obj);
-        }
         public void Update(int id, ProductUpdateRequest productUpdateRequest)
         {
+            var product = _productRepository.GetById(id)
+                          ?? throw new NotFoundException(nameof(Product), id);
 
-            var obj = _productRepository.GetById(id);
+            if (productUpdateRequest.Price > 0) product.Price = productUpdateRequest.Price;
+            if (productUpdateRequest.Stock >= 0) product.Stock = productUpdateRequest.Stock;
 
-            if (obj == null)
-                throw new NotFoundException(nameof(Product), id);
-
-            if (productUpdateRequest.Price != 0) obj.Price = productUpdateRequest.Price;
-
-            _productRepository.Update(obj);
-
+            _productRepository.Update(product);
+           
         }
 
         public void Delete(int id)
         {
-            var obj = _productRepository.GetById(id);
-
-            if (obj == null)
-                throw new NotFoundException(nameof(Product), id);
-
-            _productRepository.Delete(obj);
+            var product = _productRepository.GetById(id)
+                          ?? throw new NotFoundException(nameof(Product), id);
+            _productRepository.Delete(product);
+           
         }
 
+        ProductDto IProductService.Create(ProductCreateRequest productCreateRequest)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

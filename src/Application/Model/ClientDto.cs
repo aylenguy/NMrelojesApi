@@ -1,9 +1,6 @@
 ﻿using Domain.Entities;
-using System;
+using Domain.Entities.Domain.Entities;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Model
 {
@@ -15,26 +12,23 @@ namespace Application.Model
 
         public static ClientDto Create(Client client)
         {
-            var dto = new ClientDto();
-            dto.Id = client.Id;
-            dto.Name = client.Name;
-            dto.LastName = client.LastName;
-
-            return dto;
+            return new ClientDto
+            {
+                Id = client.Id,
+                Name = client.Name,
+                LastName = client.LastName
+            };
         }
 
-        public static List<ClientDto> CreateList(IEnumerable<Client> client)
+        public static List<ClientDto> CreateList(IEnumerable<Client> clients)
         {
-            List<ClientDto> listDto = [];
-            foreach (var c in client)
+            var listDto = new List<ClientDto>();
+            foreach (var client in clients)
             {
-                listDto.Add(Create(c));
+                listDto.Add(Create(client));
             }
-
             return listDto;
-
         }
     }
-
 }
 

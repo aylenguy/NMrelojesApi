@@ -1,9 +1,5 @@
 ﻿using Domain.Entities;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Model
 {
@@ -12,24 +8,24 @@ namespace Application.Model
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        public static AdminDto Create(Admin admin) 
-        {
-            var dto = new AdminDto();
-            dto.Id = admin.Id;
-            dto.Name = admin.Name;
-            dto.LastName = admin.LastName;
 
-            return dto;
+        public static AdminDto Create(Admin admin)
+        {
+            return new AdminDto
+            {
+                Id = admin.Id,
+                Name = admin.Name,
+                LastName = admin.LastName
+            };
         }
 
-        public static List<AdminDto> CreateList(IEnumerable<Admin> admin)
+        public static List<AdminDto> CreateList(IEnumerable<Admin> admins)
         {
-            List<AdminDto> listDto = [];
-            foreach (var a in admin)
+            var listDto = new List<AdminDto>();
+            foreach (var admin in admins)
             {
-                listDto.Add(Create(a));
+                listDto.Add(Create(admin));
             }
-
             return listDto;
         }
     }

@@ -1,28 +1,34 @@
-﻿using Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Domain.Enums;
+using Microsoft.AspNetCore.Components.Routing;
 
 namespace Domain.Entities
 {
     public abstract class User
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+
         [Column(TypeName = "nvarchar(100)")]
-        public string Name { get; set; }
+        [Required]
+        public string? Name { get; set; }
+
         [Column(TypeName = "nvarchar(100)")]
-        public string LastName { get; set; }
+        [Required]
+        public required string LastName { get; set; }
+
         [Column(TypeName = "nvarchar(100)")]
         [EmailAddress]
-        public string Email { get; set; }
-        [Column(TypeName = "nvarchar(100)")]
-        public string Password { get; set; }
-        public Rol Rol{ get; set; }
-        
+        [Required]
+        public required string Email { get; set; }
 
+        [Column(TypeName = "nvarchar(100)")]
+        [Required]
+        public required string Password { get; set; }
+
+        [Required]
+        public RolUser Rol { get; set; }
     }
 }

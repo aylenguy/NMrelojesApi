@@ -1,9 +1,6 @@
 ﻿using Domain.Entities;
-using System;
+using Domain.Entities.Domain.Entities;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Interfaces
 {

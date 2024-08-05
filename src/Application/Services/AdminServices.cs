@@ -4,16 +4,11 @@ using Application.Model.Request;
 using Domain.Entities;
 using Domain.Exceptions;
 using Domain.Interfaces;
-using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class AdminServices : IAdminServices
+    public class AdminServices : IAdminService
     {
         private readonly IAdminRepository _adminRepository;
 
@@ -25,20 +20,14 @@ namespace Application.Services
         public AdminDto GetById(int id)
         {
             var obj = _adminRepository.GetById(id)
-                ?? throw new NotFoundException(nameof(Admin), id);
-
-            var dto = AdminDto.Create(obj);
-
-            return dto;
-
+                      ?? throw new NotFoundException(nameof(Admin), id);
+            return AdminDto.Create(obj);
         }
 
         public List<AdminDto> GetAll()
         {
             var list = _adminRepository.GetAll();
-
             return AdminDto.CreateList(list);
-
         }
 
         public List<Admin> GetAllFullData()
@@ -46,43 +35,36 @@ namespace Application.Services
             return _adminRepository.GetAll();
         }
 
-        public Admin Create (AdminCreateRequest adminCreateRequest) 
+        public Admin Create(AdminCreateRequest adminCreateRequest)
         {
-            var obj = new Admin();
-            obj.Name = adminCreateRequest.Name;
-            obj.Email = adminCreateRequest.Email;
-            obj.Password = adminCreateRequest.Password;
-            obj.LastName = adminCreateRequest.LastName;
+            var admin = new Admin
+            {
+                Name = adminCreateRequest.Name,
+                Email = adminCreateRequest.Email,
+                Password = adminCreateRequest.Password,
+                LastName = adminCreateRequest.LastName
+            };
 
-            return _adminRepository.Add(obj);
+            return _adminRepository.Add(admin);
         }
 
         public void Update(int id, AdminUpdateRequest adminUpdateRequest)
         {
-            var obj = _adminRepository.GetById(id);
+            var admin = _adminRepository.GetById(id)
+                        ?? throw new NotFoundException(nameof(Admin), id);
 
-            if (obj == null)
-                throw new NotFoundException(nameof(Admin), id);
+            if (!string.IsNullOrWhiteSpace(adminUpdateRequest.Name)) admin.Name = adminUpdateRequest.Name;
+            if (!string.IsNullOrWhiteSpace(adminUpdateRequest.LastName)) admin.LastName = adminUpdateRequest.LastName;
+            if (!string.IsNullOrWhiteSpace(adminUpdateRequest.Email)) admin.Email = adminUpdateRequest.Email;
 
-            if (adminUpdateRequest.Name != string.Empty) obj.Name = adminUpdateRequest.Name;
-
-            if (adminUpdateRequest.LastName != string.Empty) obj.LastName = adminUpdateRequest.LastName;
-
-            if (adminUpdateRequest.Email != string.Empty) obj.Email = adminUpdateRequest.Email;
-
-            _adminRepository.Update(obj);
+            _adminRepository.Update(admin);
         }
 
         public void Delete(int id)
         {
-            var obj = _adminRepository.GetById(id);
-
-            if (obj == null)
-                throw new NotFoundException(nameof(Admin), id);
-
-
-            _adminRepository.Delete(obj);
+            var admin = _adminRepository.GetById(id)
+                        ?? throw new NotFoundException(nameof(Admin), id);
+            _adminRepository.Delete(admin);
         }
-
     }
 }

@@ -1,10 +1,8 @@
 ﻿using Domain.Entities;
+using Domain.Entities.Domain.Entities;
 using Domain.Interfaces;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Data
 {
@@ -19,34 +17,31 @@ namespace Infrastructure.Data
 
         public Client Add(Client client)
         {
-            _context.Client.Add(client);
+            _context.Clients.Add(client);
             _context.SaveChanges();
             return client;
         }
 
         public void Delete(Client client)
         {
-            _context.Remove(client);
+            _context.Clients.Remove(client);
             _context.SaveChanges();
-
         }
 
         public List<Client> GetAll()
         {
-            return _context.Client.ToList();
+            return _context.Clients.ToList();
         }
 
         public Client? GetById(int id)
         {
-            return _context.Client
-                .FirstOrDefault(x => x.Id == id);
+            return _context.Clients.FirstOrDefault(x => x.Id == id);
         }
 
         public void Update(Client client)
         {
-            _context.Update(client);
+            _context.Clients.Update(client);
             _context.SaveChanges();
-
         }
 
         public void SaveChanges()

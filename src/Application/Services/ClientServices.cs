@@ -2,17 +2,14 @@
 using Application.Model;
 using Application.Model.Request;
 using Domain.Entities;
+using Domain.Entities.Domain.Entities;
 using Domain.Exceptions;
 using Domain.Interfaces;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class ClientServices : IClientServices
+    public class ClientServices : IClientService
     {
         private readonly IClientRepository _clientRepository;
 
@@ -21,63 +18,54 @@ namespace Application.Services
             _clientRepository = clientRepository;
         }
 
-        public void Update (int id, ClientUpdateRequest clientUpdateRequest)
+        public ClientDto GetById(int id)
         {
-            var obj = _clientRepository.GetById(id);
-
-            if (obj == null)
-                throw new NotFoundException(nameof(Client), id);
-
-            if (obj.Name != string.Empty) clientUpdateRequest.Name = obj.Name;
-            
-            if (obj.LastName != string.Empty) clientUpdateRequest.LastName = obj.LastName;
-
-            if (obj.Email != string.Empty) clientUpdateRequest.Email = obj.Email;
-
-            _clientRepository.Update(obj);
-        }
-
-
-        public void Delete (int id)
-        {
-            var obj = _clientRepository.GetById (id)
-                ?? throw new NotFoundException(nameof(Client), id);
-
-            _clientRepository.Delete(obj);
+            var client = _clientRepository.GetById(id)
+                         ?? throw new NotFoundException(nameof(Client), id);
+            return ClientDto.Create(client);
         }
 
         public List<ClientDto> GetAll()
         {
             var list = _clientRepository.GetAll();
-
             return ClientDto.CreateList(list);
         }
 
-        public ClientDto GetById (int id)
-        {
-            var obj = _clientRepository.GetById(id)
-                ?? throw new NotFoundException(nameof(Client),id);
-
-            var dto = ClientDto.Create(obj);
-
-            return dto;
-        }
-
-        public List<Client> GetAllFullData ()
+        public List<Client> GetAllFullData()
         {
             return _clientRepository.GetAll();
         }
 
-        public Client Create (ClientCreateRequest clientCreateRequest)
+        public Client Create(ClientCreateRequest clientCreateRequest)
         {
-            var client = new Client();
-            client.Name = clientCreateRequest.Name;
-            client.LastName = clientCreateRequest.LastName;
-            client.Email = clientCreateRequest.Email;
-            client.Password = clientCreateRequest.Password;
+            var client = new Client
+            {
+                Name = clientCreateRequest.Name,
+                LastName = clientCreateRequest.LastName,
+                Email = clientCreateRequest.Email,
+                Password = clientCreateRequest.Password
+            };
 
             return _clientRepository.Add(client);
         }
 
+        public void Update(int id, ClientUpdateRequest clientUpdateRequest)
+        {
+            var client = _clientRepository.GetById(id)
+                         ?? throw new NotFoundException(nameof(Client), id);
+
+            if (!string.IsNullOrWhiteSpace(clientUpdateRequest.Name)) client.Name = clientUpdateRequest.Name;
+            if (!string.IsNullOrWhiteSpace(clientUpdateRequest.LastName)) client.LastName = clientUpdateRequest.LastName;
+            if (!string.IsNullOrWhiteSpace(clientUpdateRequest.Email)) client.Email = clientUpdateRequest.Email;
+
+            _clientRepository.Update(client);
+        }
+
+        public void Delete(int id)
+        {
+            var client = _clientRepository.GetById(id)
+                         ?? throw new NotFoundException(nameof(Client), id);
+            _clientRepository.Delete(client);
+        }
     }
 }

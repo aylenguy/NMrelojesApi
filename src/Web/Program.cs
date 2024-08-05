@@ -2,6 +2,7 @@ using Application.Interfaces;
 using Application.Services;
 using Domain.Interfaces;
 using Infrastructure.Data;
+using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -65,15 +66,15 @@ builder.Services.AddAuthentication("Bearer")
 // Inyección de dependencias para repositorios
 builder.Services.AddScoped<IAdminRepository, AdminRepositoryEf>();
 builder.Services.AddScoped<IClientRepository, ClientRepositoryEf>();
-builder.Services.AddScoped<IProductRepository, ProductRepositoryEf>();
-builder.Services.AddScoped<ISuperAdminRepository, SuperAdminRepositoryEf>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IVentaRepository, VentaRepository>(); 
 
 // Inyección de dependencias para servicios
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-builder.Services.AddScoped<IAdminServices, AdminServices>();
-builder.Services.AddScoped<IClientServices, ClientServices>();
-builder.Services.AddScoped<IProductServices, ProductServices>();
-builder.Services.AddScoped<ISuperAdminServices, SuperAdminServices>();
+
+builder.Services.AddScoped<IAdminService, AdminServices>();
+builder.Services.AddScoped<IClientService, ClientServices>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IVentaService, VentaService>(); // Agregar el servicio de Venta
 
 var app = builder.Build();
 
