@@ -1,10 +1,19 @@
-﻿namespace Application.Model.Request
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Application.Models.Requests
 {
     public class ProductCreateRequest
     {
-        public string Name { get; set; } = string.Empty;
+        [Required]
+        public string Name { get; set; }
+        [Required]
         public decimal Price { get; set; }
-        public string Color { get; set; } = string.Empty;
+        [Required]
         public int Stock { get; set; }
     }
 }

@@ -1,16 +1,21 @@
-﻿using Application.Model.Request;
-using ConsultaAlumnos.Application.Models;
+﻿using Application.Models.Requests;
 using Domain.Entities;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
     public interface IProductService
     {
-        ProductDto Create(ProductCreateRequest productCreateRequest);
-        void Delete(int id);
-        List<ProductDto> GetAll();
-        ProductDto GetById(int id);
-        void Update(int id, ProductUpdateRequest productUpdateRequest);
+        List<Product> GetAllProducts();
+        List<Product> GetProductsWithMaxPrice(decimal price);
+        Product? Get(string name);
+        Product? Get(int id);
+        int AddProduct(ProductCreateRequest request);
+        void DeleteProduct(int id);
+        void UpdateProduct(int id, ProductUpdateRequest request);
     }
 }

@@ -1,7 +1,11 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.EntityFrameworkCore.Query.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Infrastructure.Data
 {
@@ -14,19 +18,14 @@ namespace Infrastructure.Data
             _context = context;
         }
 
-        public Product? GetById(int id)
+        public Product? Get(string name)
         {
-            return _context.Products.Find(id);
+            return _context.Products.FirstOrDefault(p => p.Name == name);
         }
 
-        public List<Product> GetByName(string name)
+        public List<Product> GetProductsWithMaxPrice(decimal price)
         {
-            return _context.Products.Where(p => p.Name.Contains(name)).ToList();
-        }
-
-        public new List<Product> GetAll()
-        {
-            return _context.Products.ToList();
+            return _context.Products.Where(p => p.Price <= price).ToList();
         }
     }
 }

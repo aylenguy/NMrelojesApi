@@ -1,14 +1,15 @@
 ﻿using Domain.Entities;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Domain.Interfaces
 {
-    public interface IVentaRepository
+    public interface IVentaRepository : IRepositoryBase<Venta>
     {
-        Venta GetVentaById(int id);
-        IEnumerable<Venta> GetAllVentas();
-        Venta AddVenta(Venta venta);
-        void UpdateVenta(Venta venta);
-        void DeleteVenta(int id);
+        List<Venta> GetAllByClient(int clientId);
+        Venta? GetById(int id);
     }
 }

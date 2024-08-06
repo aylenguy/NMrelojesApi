@@ -1,13 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Domain.Interface
+namespace Domain.Interfaces
 {
     public interface IRepositoryBase<T> where T : class
     {
-        List<T> GetAll();
-        T? GetById<TId>(TId id);
+        T? Get<TId>(TId id);
+        List<T> Get();
         T Add(T entity);
         void Delete(T entity);
-        void Update(T entity);
+        T Update(T entity);
     }
 }

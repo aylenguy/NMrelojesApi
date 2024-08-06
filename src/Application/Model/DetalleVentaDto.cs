@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace Application.Models
 {
-    public class VentaDto
+    public class DetalleVentaDto
     {
-        public int ClientId { get; set; }
+        public int ProductId { get; set; }
+        public int VentaId { get; set; }
+        public int Amount { get; set; }
     }
 }

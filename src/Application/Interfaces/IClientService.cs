@@ -1,18 +1,20 @@
-﻿using Application.Model;
-using Application.Model.Request;
+﻿using Application.Models.Requests;
 using Domain.Entities;
-using Domain.Entities.Domain.Entities;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
     public interface IClientService
     {
-        Client Create(ClientCreateRequest clientCreateRequest);
-        void Delete(int id);
-        void Update(int id, ClientUpdateRequest clientUpdateRequest);
-        ClientDto GetById(int id);
-        List<ClientDto> GetAll();
-        
+        List<Client> GetAllClients();
+        Client? Get(int id);
+        Client? Get(string name);
+        int AddClient(ClientCreateRequest request);
+        void DeleteClient(int id);
+        void UpdateClient(int id, ClientUpdateRequest request);
     }
 }

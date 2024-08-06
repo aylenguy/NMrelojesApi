@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Models
+namespace Domain.Enums
 {
-    public class VentaDto
+    public enum StockStatus
     {
-        public int ClientId { get; set; }
+        Agotado,
+        Disponible
     }
 }

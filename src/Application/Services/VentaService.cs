@@ -1,96 +1,61 @@
 ﻿using Application.Interfaces;
-using Application.Model;
-using Application.Model.Request;
+using Application.Models;
+using Application.Models.Requests;
 using Domain.Entities;
-using Domain.Exceptions;
 using Domain.Interfaces;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Application.Services
 {
     public class VentaService : IVentaService
     {
-        private readonly IVentaRepository _ventaRepository;
+        private readonly IVentaRepository _repository;
 
-        public VentaService(IVentaRepository ventaRepository)
+        public VentaService(IVentaRepository repository)
         {
-            _ventaRepository = ventaRepository;
+            _repository = repository;
         }
 
-        public VentaDto GetById(int id)
+        public List<Venta> GetAllByClient(int clientId)
         {
-            var venta = _ventaRepository.GetVentaById(id)
-                        ?? throw new NotFoundException(nameof(Venta), id);
-            return VentaDto.Create(venta);
+            return _repository.GetAllByClient(clientId);
         }
 
-        public List<VentaDto> GetAll()
+        public Venta? GetById(int id)
         {
-            var list = _ventaRepository.GetAllVentas().ToList();
-            return VentaDto.CreateList(list);
+            return _repository.GetById(id);
         }
 
-        public List<Venta> GetAllFullData()
+        public int AddVenta(VentaDto dto)
         {
-            return _ventaRepository.GetAllVentas().ToList();
-        }
-
-        public Venta Create(VentaCreateRequest ventaCreateRequest)
-        {
-            var venta = new Venta
+            var venta = new Venta()
             {
-                Date = ventaCreateRequest.Date,
-                ClientId = ventaCreateRequest.ClientId,
-                ProductId = ventaCreateRequest.ProductId,
-                Quantity = ventaCreateRequest.Quantity
+                ClientId = dto.ClientId,
             };
-
-            return _ventaRepository.AddVenta(venta);
-        }
-
-        public void Update(int id, VentaUpdateRequest ventaUpdateRequest)
-        {
-            var venta = _ventaRepository.GetVentaById(id)
-                        ?? throw new NotFoundException(nameof(Venta), id);
-
-            if (ventaUpdateRequest.Date != default) venta.Date = ventaUpdateRequest.Date;
-            if (ventaUpdateRequest.ClientId > 0) venta.ClientId = ventaUpdateRequest.ClientId;
-            if (ventaUpdateRequest.ProductId > 0) venta.ProductId = ventaUpdateRequest.ProductId;
-            if (ventaUpdateRequest.Quantity > 0) venta.Quantity = ventaUpdateRequest.Quantity;
-
-            _ventaRepository.UpdateVenta(venta);
-        }
-
-        public void Delete(int id)
-        {
-            var venta = _ventaRepository.GetVentaById(id)
-                        ?? throw new NotFoundException(nameof(Venta), id);
-            _ventaRepository.DeleteVenta(id);
-        }
-
-        public Venta GetVentaById(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<Venta> GetAllVentas()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddVenta(Venta venta)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void UpdateVenta(Venta venta)
-        {
-            throw new NotImplementedException();
+            return _repository.Add(venta).Id;
         }
 
         public void DeleteVenta(int id)
         {
-            throw new NotImplementedException();
+            var ventaToDelete = _repository.Get(id);
+            if (ventaToDelete != null)
+            {
+                _repository.Delete(ventaToDelete);
+            }
+        }
+
+        public void UpdateVenta(int id, VentaDto dto)
+        {
+            var ventaToUpdate = _repository.Get(id);
+            if (ventaToUpdate != null)
+            {
+                ventaToUpdate.ClientId = dto.ClientId;
+                _repository.Update(ventaToUpdate);
+            }
         }
     }
 }

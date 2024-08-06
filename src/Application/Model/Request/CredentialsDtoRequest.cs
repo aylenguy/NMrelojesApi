@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace Application.Models.Requests
 {
-    public class ProductUpdateRequest
+    public class CredentialsDtoRequest
     {
         [Required]
-        public decimal Price { get; set; }
+        public string? Email { get; set; }
         [Required]
-        public int Stock { get; set; }
+        public string? Password { get; set; }
     }
 }

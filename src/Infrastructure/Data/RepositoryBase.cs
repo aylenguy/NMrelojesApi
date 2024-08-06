@@ -1,49 +1,50 @@
-﻿
-using Domain.Interface;
+﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Infrastructure.Data
-{//Clase genérica, repositorio base, T es como un comodin que nos permite usarlo en todas las entidades. 
- //Esta clase no existe hasta el momento en que se la llama a travez de otro repositorio. 
- // contiene los metodos basico de un abmusing Domain.Interface;
-    public class RepositoryBase<T> : IRepositoryBase<T> where T : class
+{
+    public class RepositoryBase<T> where T : class
     {
-        private readonly DbContext _dbContext;
-
-        public RepositoryBase(DbContext dbContext)
+        private readonly DbContext _context;
+        public RepositoryBase(ApplicationContext context)
         {
-            _dbContext = dbContext;
+            _context = context;
         }
 
-        public List<T> GetAll()
+        public T? Get<TId>(TId id)
         {
-            return _dbContext.Set<T>().ToList();
+            return _context.Set<T>().Find(new object[] { id });
         }
 
-        public T? GetById<TId>(TId id)
+        public List<T> Get()
         {
-            return _dbContext.Set<T>().Find(new object[] { id });
+            return _context.Set<T>().ToList();
         }
 
         public T Add(T entity)
         {
-            _dbContext.Set<T>().Add(entity);
-            _dbContext.SaveChanges();
+            _context.Set<T>().Add(entity);
+            _context.SaveChanges();
             return entity;
         }
 
         public void Delete(T entity)
         {
-            _dbContext.Set<T>().Remove(entity);
-            _dbContext.SaveChanges();
+            _context.Set<T>().Remove(entity);
+            _context.SaveChanges();
         }
 
-        public void Update(T entity)
+        public T Update(T entity)
         {
-            _dbContext.Set<T>().Update(entity);
-            _dbContext.SaveChanges();
+            _context.Set<T>().Update(entity);
+            _context.SaveChanges();
+            return entity;
         }
     }
 }
+
