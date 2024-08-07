@@ -16,9 +16,10 @@ namespace Infrastructure.Data
             _context = context;
         }
 
-        public Client? Get(string name)
+        public Client? GetByLastName(string lastName)
         {
-            return _context.Clients.FirstOrDefault(x => x.Name == name);
+            return _context.Clients.FirstOrDefault(c => c.LastName == lastName);
         }
+
     }
 }

@@ -25,8 +25,8 @@ namespace Web.Controllers
 
         private bool IsUserInRole(string role)
         {
-            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); // Obtener el claim de rol, si existe
-            return roleClaim != null && roleClaim.Value == role; //Verificar si el claim existe y su valor es "role"
+            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); 
+            return roleClaim != null && roleClaim.Value == role; 
         }
 
         private int? GetUserId() //Funcion para obtener el userId de las claims del usuario autenticado en el contexto de la solicitud actual.
@@ -61,23 +61,23 @@ namespace Web.Controllers
                 var client = _service.Get(id);
                 if (client == null)
                 {
-                    return NotFound($"No se encontró ningún cliente con el ID: {id}");
+                    return NotFound($"Ningún cliente encontrado con el ID: {id}");
                 }
                 return Ok(client);
             }
             return Forbid();
         }
 
-        [HttpGet("{name}")]
+        [HttpGet("{lastName}")]
         [Authorize]
-        public IActionResult GetByName([FromRoute] string name)
+        public IActionResult GetByLastName([FromRoute] string lastName)
         {
             if (IsUserInRole("Admin"))
             {
-                var client = _service.Get(name);
+                var client = _service.GetByLastName(lastName); 
                 if (client == null)
                 {
-                    return NotFound($"No se encontró ningún cliente con el nombre: {name}");
+                    return NotFound($"Ningún cliente encontrado con el apellido: {lastName}");
                 }
                 return Ok(client);
             }
@@ -85,7 +85,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
+        
         public IActionResult Add([FromBody] ClientCreateRequest body)
         {
             var newClient = _service.AddClient(body);
@@ -102,16 +102,16 @@ namespace Web.Controllers
                 return Forbid();
             }
 
-            var existingClient = _service.Get(id);
-            if (existingClient == null)
+            var clientExisting = _service.Get(id);
+            if (clientExisting == null)
             {
-                return NotFound($"No se encontró ningún Cliente con el ID: {id}");
+                return NotFound($"Ningún Cliente encontrado con el ID: {id}");
             }
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == id))
             {
                 _service.DeleteClient(id);
-                return Ok($"Cliente con ID: {id} eliminado");
+                return Ok($"Eliminado el Cliente con ID: {id} ");
             }
 
             return Forbid();
@@ -127,10 +127,10 @@ namespace Web.Controllers
                 return Forbid();
             }
 
-            var existingClient = _service.Get(id);
-            if (existingClient == null)
+            var clientExisting = _service.Get(id);
+            if (clientExisting == null)
             {
-                return NotFound($"No se encontró ningún Cliente con el ID: {id}");
+                return NotFound($"Ningún Cliente encontrado con el ID: {id}");
             }
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == id))

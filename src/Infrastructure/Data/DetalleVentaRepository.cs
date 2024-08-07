@@ -56,14 +56,15 @@ namespace Infrastructure.Data
                 .ToList();
         }
 
+        public Product? GetProduct(int productId)
+        {
+            return _context.Products.Find(productId);
+        }
         public bool VentaExists(int ventaId)
         {
             return _context.Ventas.Any(v => v.Id == ventaId);
         }
 
-        public Product? GetProduct(int productId)
-        {
-            return _context.Products.Find(productId);
-        }
+        
     }
 }

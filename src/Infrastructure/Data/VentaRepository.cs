@@ -17,7 +17,7 @@ namespace Infrastructure.Data
             _context = context;
         }
 
-        public List<Venta> GetAllByClient(int clientId) //todas por cliente
+        public List<Venta> GetAllByClient(int clientId) 
         {
             return _context.Ventas
                 .Include(so => so.Client)

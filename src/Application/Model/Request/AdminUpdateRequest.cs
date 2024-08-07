@@ -10,13 +10,17 @@ namespace Application.Models.Requests
     public class AdminUpdateRequest
     {
         [Required]
+        public required string Name { get; set; }
+        [Required]
+        public string LastName { get; set; }
+        [Required]
         public string Email { get; set; }
         [Required]
         public string UserName { get; set; }
         [Required]
         public string Password { get; set; }
 
-        public string Name { get; set; } // Agregar esta propiedad
-        public string LastName { get; set; }
+        
+        
     }
 }

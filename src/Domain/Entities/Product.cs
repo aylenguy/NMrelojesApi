@@ -24,9 +24,7 @@ namespace Domain.Entities
         [Required]
         public decimal Price { get; set; }
 
-        [Required]
         public int Stock { get; set; }
-
-        public StockStatus StockStatus => Stock > 0 ? StockStatus.Disponible : StockStatus.Agotado;
+        public StockStatus StockStatus => Stock > 0 ? StockStatus.Available : StockStatus.OutOfStock;
     }
 }

@@ -18,5 +18,6 @@ namespace Infrastructure.Data
         {
             return _context.Admins.FirstOrDefault(x => x.Name == name);
         }
+
     }
 }

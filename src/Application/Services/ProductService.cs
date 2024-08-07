@@ -23,11 +23,7 @@ namespace Application.Services
             return _repository.Get();
         }
 
-        public List<Product> GetProductsWithMaxPrice(decimal price)
-        {
-            return _repository.GetProductsWithMaxPrice(price);
-        }
-
+        
         public Product? Get(string name)
         {
             return _repository.Get(name);

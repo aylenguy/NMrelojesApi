@@ -24,11 +24,12 @@ namespace Web.Controllers
 
         private bool IsUserInRole(string role)
         {
-            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); // Obtener el claim de rol, si existe
-            return roleClaim != null && roleClaim.Value == role; //Verificar si el claim existe y su valor es "role"
+            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); 
+            return roleClaim != null && roleClaim.Value == role; 
         }
 
         [HttpGet]
+        [Authorize]
         public IActionResult GetAll()
         {
             if (IsUserInRole("Admin") || (IsUserInRole("Client")))
@@ -39,22 +40,10 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpGet("by-price")]
-        public IActionResult GetProductsWithMaxPrice([FromQuery] decimal price)
-        {
-            if (IsUserInRole("Admin") || (IsUserInRole("Client")))
-            {
-                var products = _productService.GetProductsWithMaxPrice(price);
-                if (products == null || !products.Any()) //Any() comprueba si la coleccion tiene algun elemento.
-                {
-                    return NotFound($"No se encontraron Productos con un precio menor o igual al ingresado.");
-                }
-                return Ok(products);
-            }
-            return Forbid();
-        }
+        
 
         [HttpGet("{id}")]
+        [Authorize]
         public IActionResult GetById([FromRoute] int id)
         {
             if (IsUserInRole("Admin"))
@@ -62,7 +51,7 @@ namespace Web.Controllers
                 var product = _productService.Get(id);
                 if (product == null)
                 {
-                    return NotFound($"No se encontró ningún Producto con el ID: {id}");
+                    return NotFound($"Producto con el ID: {id} no enctontrado");
                 }
                 return Ok(product);
             }
@@ -70,6 +59,7 @@ namespace Web.Controllers
         }
 
         [HttpGet("{name}")]
+        [Authorize]
         public IActionResult GetByName([FromRoute] string name)
         {
             if (IsUserInRole("Admin") || (IsUserInRole("Client")))
@@ -77,12 +67,13 @@ namespace Web.Controllers
                 var product = _productService.Get(name);
                 if (product == null)
                 {
-                    return NotFound($"No se encontró ningún Producto con el nombre: {name}");
+                    return NotFound($" Producto con el nombre: {name} no encontrado");
                 }
                 return Ok(product);
             }
             return Forbid();
         }
+
 
         [HttpPost]
         public IActionResult Add([FromBody] ProductCreateRequest body)
@@ -90,12 +81,13 @@ namespace Web.Controllers
             if (IsUserInRole("Admin"))
             {
                 var newProduct = _productService.AddProduct(body);
-                return CreatedAtAction(nameof(GetById), new { id = newProduct }, $"Creado el Producto con el ID: {newProduct}");
+                return CreatedAtAction(nameof(GetById), new { id = newProduct }, $"Producto creado con el ID: {newProduct}");
             }
             return Forbid();
         }
 
         [HttpDelete("{id}")]
+        [Authorize]
         public IActionResult DeleteProduct([FromRoute] int id)
         {
             if (IsUserInRole("Admin"))
@@ -103,7 +95,7 @@ namespace Web.Controllers
                 var existingProduct = _productService.Get(id);
                 if (existingProduct == null)
                 {
-                    return NotFound($"No se encontró ningún Producto con el ID: {id}");
+                    return NotFound($"Producto con el ID: {id} no enctontrado");
                 }
                 _productService.DeleteProduct(id);
                 return Ok($"Producto con ID: {id} eliminado");
@@ -119,7 +111,7 @@ namespace Web.Controllers
                 var existingProduct = _productService.Get(id);
                 if (existingProduct == null)
                 {
-                    return NotFound($"No se encontró ningún Producto con el ID: {id}");
+                    return NotFound($"Producto con el ID: {id} no enctontrado");
                 }
                 _productService.UpdateProduct(id, request);
                 return Ok($"Producto con ID: {id} actualizado correctamente");

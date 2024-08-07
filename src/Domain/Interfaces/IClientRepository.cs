@@ -9,6 +9,6 @@ namespace Domain.Interfaces
 {
     public interface IClientRepository : IRepositoryBase<Client>
     {
-        Client? Get(string name);
+        Client? GetByLastName(string lastName);
     }
 }

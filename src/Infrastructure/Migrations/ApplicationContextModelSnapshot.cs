@@ -41,7 +41,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("VentaId");
 
-                    b.ToTable("DetalleVentas", (string)null);
+                    b.ToTable("DetalleVentas");
                 });
 
             modelBuilder.Entity("Domain.Entities.Product", b =>
@@ -62,7 +62,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
 
                     b.HasData(
                         new
@@ -107,7 +107,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.HasDiscriminator<string>("UserType").HasValue("User");
 
@@ -130,7 +130,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("Ventas", (string)null);
+                    b.ToTable("Ventas");
                 });
 
             modelBuilder.Entity("Domain.Entities.Admin", b =>

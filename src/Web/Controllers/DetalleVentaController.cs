@@ -30,11 +30,11 @@ namespace Web.Controllers
 
         private bool IsUserInRole(string role)
         {
-            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); // Obtener el claim de rol, si existe
+            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); 
             return roleClaim != null && roleClaim.Value == role; //Verificar si el claim existe y su valor es "role"
         }
 
-        private int? GetUserId() //Función para obtener el userId de las claims del usuario autenticado en el contexto de la solicitud actual.
+        private int? GetUserId() 
         {
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
             if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
@@ -56,13 +56,13 @@ namespace Web.Controllers
             var detalleVenta = _detalleVentaService.GetById(id);
             if (detalleVenta == null)
             {
-                return NotFound($"No se encontró ningún detalle de venta con el ID: {id}");
+                return NotFound($"Ningún detalle de venta encontrado con el ID: {id} ");
             }
 
             var venta = _ventaService.GetById(detalleVenta.VentaId);
             if (venta == null)
             {
-                return NotFound($"No se encontró ninguna venta con el ID: {detalleVenta.VentaId}");
+                return NotFound($" Ninguna venta encontrada con el ID: {detalleVenta.VentaId}");
             }
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == venta.ClientId))
@@ -81,7 +81,7 @@ namespace Web.Controllers
                 var product = _productService.Get(productId);
                 if (product == null)
                 {
-                    return NotFound($"No se encontró ningún producto con el ID: {productId}");
+                    return NotFound($" Ningún producto encontrado con el ID: {productId}");
                 }
 
                 var detallesVenta = _detalleVentaService.GetAllByProduct(productId);
@@ -102,7 +102,7 @@ namespace Web.Controllers
             var venta = _ventaService.GetById(ventaId);
             if (venta == null)
             {
-                return NotFound($"No se encontró ninguna venta con el ID: {ventaId}");
+                return NotFound($"Ninguna venta encontrada con el ID: {ventaId}");
             }
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == venta.ClientId))
@@ -126,7 +126,7 @@ namespace Web.Controllers
             var existingVenta = _ventaService.GetById(dto.VentaId);
             if (existingVenta == null)
             {
-                return NotFound($"No se encontró ninguna venta con el ID: {dto.VentaId}");
+                return NotFound($"Ninguna venta encontrada con el ID: {dto.VentaId}");
             }
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == existingVenta.ClientId))
@@ -149,19 +149,19 @@ namespace Web.Controllers
             var existingDetalleVenta = _detalleVentaService.GetById(id);
             if (existingDetalleVenta == null)
             {
-                return NotFound($"No se encontró ningún detalle de venta con el ID: {id}");
+                return NotFound($"Ningún detalle de venta encontrado con el ID: {id}");
             }
 
             var existingVenta = _ventaService.GetById(existingDetalleVenta.VentaId);
             if (existingVenta == null)
             {
-                return NotFound($"No se encontró ninguna venta con el ID: {existingDetalleVenta.VentaId}");
+                return NotFound($"Ninguna venta encontrada con el ID: {existingDetalleVenta.VentaId}");
             }
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == existingVenta.ClientId))
             {
                 _detalleVentaService.DeleteDetalleVenta(id);
-                return Ok($"Detalle de venta con ID: {id} eliminado");
+                return Ok($"Eliminado el detalle de venta con ID: {id} ");
             }
 
             return Forbid();
@@ -179,13 +179,13 @@ namespace Web.Controllers
             var existingDetalleVenta = _detalleVentaService.GetById(id);
             if (existingDetalleVenta == null)
             {
-                return NotFound($"No se encontró ningún Detalle de Venta con el ID: {id}");
+                return NotFound($"Ningún Detalle de Venta encontrado con el ID: {id}");
             }
 
             var existingVenta = _ventaService.GetById(existingDetalleVenta.VentaId);
             if (existingVenta == null)
             {
-                return NotFound($"No se encontró ninguna venta con el ID: {existingDetalleVenta.VentaId}");
+                return NotFound($"Ninguna venta enocntrada con el ID: {existingDetalleVenta.VentaId}");
             }
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == existingVenta.ClientId))

@@ -29,10 +29,11 @@ namespace Application.Services
             return _repository.Get(id);
         }
 
-        public Client? Get(string name)
+        public Client? GetByLastName(string lastName)
         {
-            return _repository.Get(name);
+            return _repository.GetByLastName(lastName);
         }
+
 
         public int AddClient(ClientCreateRequest request)
         {
@@ -42,9 +43,9 @@ namespace Application.Services
                 LastName = request.LastName,
                 Email = request.Email,
                 UserName = request.UserName,
+                PhoneNumber = request.PhoneNumber,
                 Password = request.Password,
                 UserType = "Client",
-                Address = request.Address,
             };
             return _repository.Add(client).Id;
         }
@@ -64,13 +65,15 @@ namespace Application.Services
             if (clientToUpdate != null)
 
             {
-
-                clientToUpdate.Email = request.Email;
-                clientToUpdate.UserName = request.UserName;
-                clientToUpdate.Password = request.Password;
-                clientToUpdate.Address = request.Address;
                 clientToUpdate.Name = request.Name;
                 clientToUpdate.LastName = request.LastName;
+                clientToUpdate.Email = request.Email;
+                clientToUpdate.UserName = request.UserName;
+                clientToUpdate.Address = request.Address;
+                clientToUpdate.Password = request.Password;
+                
+                
+                
 
                 _repository.Update(clientToUpdate);
             }

@@ -25,8 +25,8 @@ namespace Web.Controllers
 
         private bool IsUserInRole(string role)
         {
-            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); // Obtener el claim de rol, si existe
-            return roleClaim != null && roleClaim.Value == role; //Verificar si el claim existe y su valor es "role"
+            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); 
+            return roleClaim != null && roleClaim.Value == role; 
         }
         private int? GetUserId() //Funcion para obtener el userId de las claims del usuario autenticado en el contexto de la solicitud actual.
         {
@@ -62,7 +62,7 @@ namespace Web.Controllers
                 var venta = _ventaService.GetById(id);
                 if (venta == null)
                 {
-                    return NotFound($"No se encontró ninguna venta con el ID: {id}");
+                    return NotFound($"Venta con ID {id} no encontrada");
                 }
                 return Ok(venta);
             }
@@ -80,7 +80,7 @@ namespace Web.Controllers
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == dto.ClientId))
             {
                 var ventaId = _ventaService.AddVenta(dto);
-                return CreatedAtAction(nameof(GetById), new { id = ventaId }, $"Creada la Venta con el ID: {ventaId}");
+                return CreatedAtAction(nameof(GetById), new { id = ventaId }, $"Venta creada con el ID: {ventaId}");
             }
             return Forbid();
         }
@@ -96,7 +96,7 @@ namespace Web.Controllers
             var existingVenta = _ventaService.GetById(id);
             if (existingVenta == null)
             {
-                return NotFound($"No se encontró ninguna venta con el ID: {id}");
+                return NotFound($"Venta con ID {id} no encontrada");
             }
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == existingVenta.ClientId))
@@ -116,7 +116,7 @@ namespace Web.Controllers
                 var existingVenta = _ventaService.GetById(id);
                 if (existingVenta == null)
                 {
-                    return NotFound($"No se encontró ninguna Venta con el ID: {id}");
+                    return NotFound($"Venta con ID {id} no encontrada");
                 }
 
                 _ventaService.UpdateVenta(id, dto);

@@ -1,8 +1,8 @@
-using Application.Interfaces;
+ï»¿using Application.Interfaces;
 using Application.Services;
 using Domain.Interfaces;
 using Domain.Entities;
-using Infrastructure.Data;
+using Infrastructure.Data; //Para que aceda al contexto.
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Data.Sqlite;
@@ -16,7 +16,7 @@ using static Infrastructure.Services.AuthenticateService;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Sirve para que los controladores ASP.NET Core utilicen Newtonsoft.Json para manejar los bucles de referencia para la serialización JSON.
+
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
 );
@@ -29,7 +29,7 @@ builder.Services.AddSwaggerGen(setupAction =>
     {
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
-        Description = "Acá pegar el token generado al loguearse."
+        Description = "AcÃ¡ pegar el token generado al loguearse."
     });
 
     setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -40,7 +40,7 @@ builder.Services.AddSwaggerGen(setupAction =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "EcommerceApiBearerAuth" } //Tiene que coincidir con el id seteado arriba en la definición
+                    Id = "EcommerceApiBearerAuth" } //Tiene que coincidir con el id seteado arriba en la definiciÃ³n
                 }, new List<string>() }
     });
 });
@@ -63,8 +63,8 @@ using (var command = connection.CreateCommand())
 builder.Services.AddDbContext<ApplicationContext>(dbContextOptions => dbContextOptions.UseSqlite(connection));
 #endregion
 
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication("Bearer") //"Bearer" es el tipo de auntenticaciï¿½n que tenemos que elegir despuï¿½s en PostMan para pasarle el token
+    .AddJwtBearer(options => // definimos la configuraciï¿½n de la autenticaciï¿½n. le decimos quï¿½ cosas queremos comprobar. La fecha de expiraciï¿½n se valida por defecto.
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {

@@ -25,7 +25,7 @@ namespace Web.Controllers
 
         private bool IsUserInRole(string role)
         {
-            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); // Obtener el claim de rol, si existe
+            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); // Obtener el claim de rol
             return roleClaim != null && roleClaim.Value == role; //Verificar si el claim existe y su valor es "role"
         }
 
@@ -47,7 +47,7 @@ namespace Web.Controllers
                 var admin = _service.Get(id);
                 if (admin == null)
                 {
-                    return NotFound($"No se encontró ningún admin con el ID: {id}");
+                    return NotFound($"Ningún admin encontrado con el ID: {id}");
                 }
                 return Ok(admin);
             }
@@ -62,7 +62,7 @@ namespace Web.Controllers
                 var admin = _service.Get(name);
                 if (admin == null)
                 {
-                    return NotFound($"No se encontró ningún admin con el nombre: {name}");
+                    return NotFound($"Ningún admin encontrado con el nombre: {name}");
                 }
                 return Ok(admin);
             }
@@ -75,7 +75,7 @@ namespace Web.Controllers
             if (IsUserInRole("Admin"))
             {
                 var newAdmin = _service.AddAdmin(body);
-                return CreatedAtAction(nameof(GetById), new { id = newAdmin }, $"Creado el Admin con el ID: {newAdmin}");
+                return CreatedAtAction(nameof(GetById), new { id = newAdmin }, $"Admin creado con el ID: {newAdmin}");
             }
             return Forbid();
         }
@@ -85,13 +85,13 @@ namespace Web.Controllers
         {
             if (IsUserInRole("Admin"))
             {
-                var existingAdmin = _service.Get(id);
-                if (existingAdmin == null)
+                var adminexisting = _service.Get(id);
+                if (adminexisting == null)
                 {
-                    return NotFound($"No se encontró ningún Admin con el ID: {id}");
+                    return NotFound($"Ningún admin encontrado con el ID: {id}");
                 }
                 _service.DeleteAdmin(id);
-                return Ok($"Admin con ID: {id} eliminado");
+                return Ok($"Eliminado el Admin con ID: {id} ");
             }
             return Forbid();
         }
@@ -101,10 +101,10 @@ namespace Web.Controllers
         {
             if (IsUserInRole("Admin"))
             {
-                var existingAdmin = _service.Get(id);
-                if (existingAdmin == null)
+                var adminexisting = _service.Get(id);
+                if (adminexisting == null)
                 {
-                    return NotFound($"No se encontró ningún Admin con el ID: {id}");
+                    return NotFound($"Ningún Admin encontrado con el ID: {id}");
                 }
                 _service.UpdateAdmin(id, request);
                 return Ok($"Admin con ID: {id} actualizado correctamente");

@@ -8,7 +8,12 @@ using System.Threading.Tasks;
 namespace Application.Models.Requests
 {
     public class ClientUpdateRequest
+
     {
+        [Required]
+        public string Name { get; set; }
+        [Required]
+        public string LastName { get; set; }
         [Required]
         public string Email { get; set; }
         [Required]
@@ -16,9 +21,9 @@ namespace Application.Models.Requests
         [Required]
         public string UserName { get; set; }
         [Required]
-        public string Address { get; set; }
+        public string PhoneNumber { get; set; }
 
-        public string Name { get; set; } 
-        public string LastName { get; set; }
+        
+        
     }
 }

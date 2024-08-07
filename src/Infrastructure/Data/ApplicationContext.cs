@@ -6,6 +6,7 @@ namespace Infrastructure.Data
 {
     public class ApplicationContext : DbContext
     {
+        //dbset recibe una entidad y permite traducirlo a una tabla y la tabla con ese nombre se traduce a entidad
         public DbSet<User> Users { get; set; }
         public DbSet<Client> Clients { get; set; }
         public DbSet<Admin> Admins { get; set; }
@@ -17,7 +18,9 @@ namespace Infrastructure.Data
         {
 
         }
-
+        //---Fuent API---
+        // Este método (OnModelCreating) se usa para definir cómo se deben mapear las entidades del dominio a las tablas de la base de datos
+        // y establecer sus relaciones, conversiones (el enum a cadena) y datos iniciales (Seed Data).
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>()
@@ -28,8 +31,8 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Admin>().HasData(
                 new Admin
                 {
-                    LastName = "Guy",
                     Name = "Aylen",
+                    LastName = "Guy",
                     Email = "aylenguy@gmail.com",
                     UserName = "aylu",
                     Password = "123",
@@ -40,12 +43,12 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Client>().HasData(
                 new Client
                 {
-                    LastName = "Fernandez",
                     Name = "Matias",
+                    LastName = "Fernandez",
                     Email = "matiasfernandez@gmail.com",
                     UserName = "mati",
+                    PhoneNumber = "341678345",
                     Password = "1234",
-                    Address = "rueda 2217",
                     Id = 3,
                     UserType = "Client"
                 });

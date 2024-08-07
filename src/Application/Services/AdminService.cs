@@ -33,6 +33,7 @@ namespace Application.Services
             return _repository.Get(name);
         }
 
+
         public int AddAdmin(AdminCreateRequest request)
         {
             var admin = new Admin()
@@ -64,7 +65,7 @@ namespace Application.Services
                 adminToUpdate.Email = request.Email;
                 adminToUpdate.UserName = request.UserName;
                 adminToUpdate.Password = request.Password;
-                adminToUpdate.Name = request.Name; // Agregar esta línea para actualizar el nombre
+                adminToUpdate.Name = request.Name; 
                 adminToUpdate.LastName = request.LastName;
 
                 _repository.Update(adminToUpdate);

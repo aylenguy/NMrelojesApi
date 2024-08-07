@@ -15,12 +15,14 @@ namespace Domain.Entities
         public int Id { get; set; }
         public int Amount { get; set; }
         public decimal UnitPrice { get; set; }
-        [ForeignKey("ProductId")]
-        public int ProductId { get; set; } // Clave foránea para la relación con Producto
-        public Product Product { get; set; }
+        
         [ForeignKey("VentaId")]
         public int VentaId { get; set; } // Clave foránea para la relación con OrdenDeVenta
-        public Venta Venta { get; set; }
+        public required Venta Venta { get; set; }
+
+        [ForeignKey("ProductId")]
+        public int ProductId { get; set; } // Clave foránea para la relación con Producto
+        public required Product Product { get; set; }
         public decimal Total { get { return Product.Price * Amount; } }
     }
 }

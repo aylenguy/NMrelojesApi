@@ -14,9 +14,11 @@ namespace Domain.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public DateTime Date { get; set; } = DateTime.Now;
+
+        // Clave foránea 
         [ForeignKey("ClientId")]
-        public int ClientId { get; set; } // Clave foránea para la relación con Cliente
-        public Client Client { get; set; }
+        public int ClientId { get; set; } 
+        public required Client Client { get; set; }
         public ICollection<DetalleVenta> DetalleVentas { get; set; } = new List<DetalleVenta>();
     }
 }

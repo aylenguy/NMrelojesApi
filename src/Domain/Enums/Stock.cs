@@ -8,7 +8,7 @@ namespace Domain.Enums
 {
     public enum StockStatus
     {
-        Agotado,
-        Disponible
+        OutOfStock,
+        Available
     }
 }

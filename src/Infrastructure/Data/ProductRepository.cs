@@ -23,9 +23,6 @@ namespace Infrastructure.Data
             return _context.Products.FirstOrDefault(p => p.Name == name);
         }
 
-        public List<Product> GetProductsWithMaxPrice(decimal price)
-        {
-            return _context.Products.Where(p => p.Price <= price).ToList();
-        }
+       
     }
 }
