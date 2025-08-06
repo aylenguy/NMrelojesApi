@@ -25,8 +25,9 @@ namespace Web.Controllers
 
         private bool IsUserInRole(string role)
         {
-            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); // Obtener el claim de rol
-            return roleClaim != null && roleClaim.Value == role; //Verificar si el claim existe y su valor es "role"
+            // Obtener el claim de rol y verificar si existe
+            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); 
+            return roleClaim != null && roleClaim.Value == role; 
         }
 
         [HttpGet]
@@ -39,23 +40,8 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpGet("{id}")]
-        public IActionResult GetById([FromRoute] int id)
-        {
-            if (IsUserInRole("Admin"))
-            {
-                var admin = _service.Get(id);
-                if (admin == null)
-                {
-                    return NotFound($"Ningún admin encontrado con el ID: {id}");
-                }
-                return Ok(admin);
-            }
-            return Forbid();
-        }
-
         [HttpGet("{name}")]
-        public IActionResult GetByName([FromRoute] string name)
+        public ActionResult<Admin> GetByName([FromRoute] string name)
         {
             if (IsUserInRole("Admin"))
             {
@@ -69,8 +55,25 @@ namespace Web.Controllers
             return Forbid();
         }
 
+        [HttpGet("{id}")]
+        public ActionResult<Admin> GetById([FromRoute] int id)
+        {
+            if (IsUserInRole("Admin"))
+            {
+                var admin = _service.Get(id);
+                if (admin == null)
+                {
+                    return NotFound($"Ningún admin encontrado con el ID: {id}");
+                }
+                return Ok(admin);
+            }
+            return Forbid();
+        }
+
+
+
         [HttpPost]
-        public IActionResult Add([FromBody] AdminCreateRequest body)
+        public IActionResult AddAdmin([FromBody] AdminCreateRequest body)
         {
             if (IsUserInRole("Admin"))
             {
@@ -80,21 +83,6 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult DeleteAdmin(int id)
-        {
-            if (IsUserInRole("Admin"))
-            {
-                var adminexisting = _service.Get(id);
-                if (adminexisting == null)
-                {
-                    return NotFound($"Ningún admin encontrado con el ID: {id}");
-                }
-                _service.DeleteAdmin(id);
-                return Ok($"Eliminado el Admin con ID: {id} ");
-            }
-            return Forbid();
-        }
 
         [HttpPut("{id}")]
         public IActionResult UpdateAdmin([FromRoute] int id, [FromBody] AdminUpdateRequest request)
@@ -111,5 +99,24 @@ namespace Web.Controllers
             }
             return Forbid();
         }
+
+
+        [HttpDelete("{id}")]
+        public ActionResult DeleteAdmin(int id)
+        {
+            if (IsUserInRole("Admin"))
+            {
+                var adminexisting = _service.Get(id);
+                if (adminexisting == null)
+                {
+                    return NotFound($"Ningún admin encontrado con el ID: {id}");
+                }
+                _service.DeleteAdmin(id);
+                return Ok($"Eliminado el Admin con ID: {id}");
+            }
+            return Forbid();
+        }
+
     }
 }
+

@@ -156,7 +156,7 @@ namespace Infrastructure.Migrations
                 {
                     b.HasBaseType("Domain.Entities.User");
 
-                    b.Property<string>("Address")
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -172,7 +172,7 @@ namespace Infrastructure.Migrations
                             Password = "1234",
                             UserName = "mati",
                             UserType = "Client",
-                            Address = "rueda 2217"
+                            PhoneNumber = "341678345"
                         });
                 });
 

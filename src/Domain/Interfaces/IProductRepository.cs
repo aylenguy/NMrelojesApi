@@ -11,5 +11,7 @@ namespace Domain.Interfaces
     {
         Product? Get(string name);
         
+
+
     }
 }

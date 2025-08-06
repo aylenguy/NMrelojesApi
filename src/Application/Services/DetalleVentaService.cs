@@ -8,18 +8,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-
 namespace Application.Services
 {
     public class DetalleVentaService : IDetalleVentaService
     {
         private readonly IDetalleVentaRepository _repository;
         private readonly IProductService _productService;
+        private readonly IVentaRepository _ventaRepository;
 
-        public DetalleVentaService(IDetalleVentaRepository repository, IProductService productService)
+        public DetalleVentaService(IDetalleVentaRepository repository, IProductService productService, IVentaRepository ventaRepository)
         {
             _repository = repository;
             _productService = productService;
+            _ventaRepository = ventaRepository;
         }
 
         public List<DetalleVenta> GetAllByClient(int clientId)
@@ -44,113 +45,143 @@ namespace Application.Services
 
         public int AddDetalleVenta(DetalleVentaDto dto)
         {
-            // Validar que la cantidad sea positiva
-            if (dto.Amount <= 0)
+            try
             {
-                throw new NotAllowedException("La cantidad debe ser mayor que cero.");
+                // Validar que la cantidad sea positiva
+                if (dto.Amount <= 0)
+                {
+                    throw new NotAllowedException("La cantidad debe ser mayor que cero.");
+                }
+
+                // Obtener el producto para verificar su existencia
+                var product = _productService.Get(dto.ProductId);
+                if (product == null)
+                {
+                    throw new NotAllowedException("El producto no fue encontrado.");
+                }
+
+                // Verificar la existencia de la venta
+                var venta = _ventaRepository.GetById(dto.VentaId);
+                if (venta == null)
+                {
+                    throw new NotAllowedException("La venta no existe.");
+                }
+
+                // Verificar stock del producto
+                if (product.Stock <= 0)
+                {
+                    throw new NotAllowedException("Stock insuficiente para el producto.");
+                }
+
+                if (product.Stock < dto.Amount)
+                {
+                    throw new NotAllowedException("No hay suficiente stock para el producto.");
+                }
+
+                var detalleVenta = new DetalleVenta()
+                {
+                    ProductId = dto.ProductId,
+                    VentaId = dto.VentaId,
+                    Amount = dto.Amount,
+                    UnitPrice = product.Price,
+                    Product = product,
+                    Venta = venta
+                };
+
+                // Actualizar stock del producto
+                var updatedProductRequest = new ProductUpdateRequest
+                {
+                    Price = product.Price,
+                    Stock = product.Stock - dto.Amount
+                };
+                _productService.UpdateProduct(dto.ProductId, updatedProductRequest);
+
+                return _repository.Add(detalleVenta).Id;
             }
-
-            // Obtener el producto para verificar su existencia
-            var product = _repository.GetProduct(dto.ProductId);
-            if (product == null)
+            catch (NotAllowedException)
             {
-                throw new NotAllowedException("El producto no fue encontrado.");
+                // Re-lanzar la excepción original sin encapsularla
+                throw;
             }
-
-            // Verificar la existencia de la venta
-            if (!_repository.VentaExists(dto.VentaId))
+            catch (Exception ex)
             {
-                throw new NotAllowedException("La venta no existe.");
+                // Capturar cualquier otra excepción inesperada
+                throw new Exception("Ocurrió un error inesperado al agregar detalle de venta.", ex);
             }
-
-            // Verifica stock del producto
-            if (product.Stock <= 0)
-            {
-                throw new NotAllowedException(" Stock insuficiente para el producto.");
-            }
-
-            if (product.Stock < dto.Amount)
-            {
-                throw new NotAllowedException("No hay suficiente stock para el producto.");
-            }
-
-            var detalleVenta = new DetalleVenta()
-            {
-                ProductId = dto.ProductId,
-                VentaId = dto.VentaId,
-                Amount = dto.Amount,
-                UnitPrice = product.Price, 
-                Product = product 
-            };
-
-            // Actualizar stock del producto
-            var updatedProductRequest = new ProductUpdateRequest
-            {
-                Price = product.Price,
-                Stock = product.Stock - dto.Amount
-            };
-            _productService.UpdateProduct(dto.ProductId, updatedProductRequest);
-
-            //Actualizar el estado del stock
-            product.Stock = updatedProductRequest.Stock;
-
-            return _repository.Add(detalleVenta).Id;
         }
 
         public void DeleteDetalleVenta(int id)
         {
-            var detalleVentaToDelete = _repository.Get(id);
-            if (detalleVentaToDelete != null)
+            try
             {
-                _repository.Delete(detalleVentaToDelete);
+                var detalleVentaToDelete = _repository.Get(id);
+                if (detalleVentaToDelete != null)
+                {
+                    _repository.Delete(detalleVentaToDelete);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ocurrió un error al eliminar el detalle de venta.", ex);
             }
         }
 
         public void UpdateDetalleVenta(int id, DetalleVentaUpdateRequest request)
         {
-            var detalleVentaToUpdate = _repository.Get(id);
-            if (detalleVentaToUpdate == null)
+            try
             {
-                throw new NotAllowedException($"Ningun Detalle de Venta encontrado con el ID: {id}");
+                var detalleVentaToUpdate = _repository.Get(id);
+                if (detalleVentaToUpdate == null)
+                {
+                    throw new NotAllowedException($"Ningún Detalle de Venta encontrado con el ID: {id}");
+                }
+
+                var product = _productService.Get(request.ProductId);
+                if (product == null)
+                {
+                    throw new NotAllowedException($"Ningún producto encontrado con el ID: {request.ProductId}");
+                }
+
+                // Validar que Amount sea mayor que cero
+                if (request.Amount <= 0)
+                {
+                    throw new NotAllowedException("La cantidad debe ser mayor que cero.");
+                }
+
+                // Calcular la diferencia de cantidad
+                int amountDifference = request.Amount - detalleVentaToUpdate.Amount;
+
+                // Verificar que haya stock
+                if (product.Stock < amountDifference)
+                {
+                    throw new NotAllowedException("No hay suficiente stock para el producto.");
+                }
+
+                // Actualizar el stock del producto
+                var updatedProductRequest = new ProductUpdateRequest
+                {
+                    Price = product.Price,
+                    Stock = product.Stock - amountDifference
+                };
+                _productService.UpdateProduct(request.ProductId, updatedProductRequest);
+
+                // Actualizar el detalle de la orden de venta
+                detalleVentaToUpdate.Amount = request.Amount;
+                detalleVentaToUpdate.ProductId = request.ProductId;
+                detalleVentaToUpdate.Product = product; // Actualizar la propiedad Product
+                detalleVentaToUpdate.Venta = _ventaRepository.GetById(detalleVentaToUpdate.VentaId); // Actualizar la propiedad Venta
+
+                _repository.Update(detalleVentaToUpdate);
             }
-
-            var product = _productService.Get(request.ProductId);
-            if (product == null)
+            catch (NotAllowedException)
             {
-                throw new NotAllowedException($"Ningun producto encontrado con el ID: {request.ProductId}");
+                // Re-lanzar la excepción original sin encapsularla
+                throw;
             }
-
-            // Validar que Amount sea mayor que cero
-            if (request.Amount <= 0)
+            catch (Exception ex)
             {
-                throw new NotAllowedException("La cantidad debe ser mayor que cero.");
+                throw new Exception("Ocurrió un error inesperado al actualizar detalle de venta.", ex);
             }
-
-            // Calcular la diferencia de cantidad
-            int amountDifference = request.Amount - detalleVentaToUpdate.Amount;
-
-            // Verificar que haya stock
-            if (product.Stock < amountDifference)
-            {
-                throw new NotAllowedException("No hay suficiente stock para el producto.");
-            }
-
-            // Actualizar el stock del producto
-            var updatedProductRequest = new ProductUpdateRequest
-            {
-                Price = product.Price,
-                Stock = product.Stock - amountDifference
-            };
-            _productService.UpdateProduct(request.ProductId, updatedProductRequest);
-
-            // Actualizar el detalle de la orden de venta
-            detalleVentaToUpdate.Amount = request.Amount;
-            detalleVentaToUpdate.ProductId = request.ProductId;
-
-            _repository.Update(detalleVentaToUpdate);
         }
     }
 }
-
-
-

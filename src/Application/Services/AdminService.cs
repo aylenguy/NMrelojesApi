@@ -62,11 +62,12 @@ namespace Application.Services
             var adminToUpdate = _repository.Get(id);
             if (adminToUpdate != null)
             {
+                adminToUpdate.Name = request.Name;
+                adminToUpdate.LastName = request.LastName;
                 adminToUpdate.Email = request.Email;
                 adminToUpdate.UserName = request.UserName;
                 adminToUpdate.Password = request.Password;
-                adminToUpdate.Name = request.Name; 
-                adminToUpdate.LastName = request.LastName;
+               
 
                 _repository.Update(adminToUpdate);
             }

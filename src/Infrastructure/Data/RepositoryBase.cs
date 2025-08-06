@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Data
 {//Clase genérica, repositorio base, T es como un comodin que nos permite usarlo en todas las entidades. 
-    //Esta clase no existe hasta el momento en que se la llama a travez de otro repositorio. 
+    //Esta clase no existe hasta el momento en que se la llama a traves de otro repositorio. 
     public class RepositoryBase<T> where T : class
     {
         // Contexto de base de datos de Entity Framework

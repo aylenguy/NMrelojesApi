@@ -30,7 +30,7 @@ namespace Web.Controllers
 
         [HttpGet]
         [Authorize]
-        public IActionResult GetAll()
+        public IActionResult GetAllProducts()
         {
             if (IsUserInRole("Admin") || (IsUserInRole("Client")))
             {
@@ -40,7 +40,23 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        
+        [HttpGet("{name}")]
+        [Authorize]
+        public ActionResult<Product> GetByName([FromRoute] string name)
+        {
+            if (IsUserInRole("Admin") || IsUserInRole("Client"))
+            {
+                var product = _productService.Get(name);
+                if (product == null)
+                {
+                    return NotFound($"Producto con el nombre: {name} no encontrado");
+                }
+                return Ok(product);
+            }
+            return Forbid();
+        }
+
+
 
         [HttpGet("{id}")]
         [Authorize]
@@ -58,25 +74,10 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpGet("{name}")]
-        [Authorize]
-        public IActionResult GetByName([FromRoute] string name)
-        {
-            if (IsUserInRole("Admin") || (IsUserInRole("Client")))
-            {
-                var product = _productService.Get(name);
-                if (product == null)
-                {
-                    return NotFound($" Producto con el nombre: {name} no encontrado");
-                }
-                return Ok(product);
-            }
-            return Forbid();
-        }
-
+     
 
         [HttpPost]
-        public IActionResult Add([FromBody] ProductCreateRequest body)
+        public IActionResult AddProduct([FromBody] ProductCreateRequest body)
         {
             if (IsUserInRole("Admin"))
             {
@@ -86,38 +87,43 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpDelete("{id}")]
-        [Authorize]
-        public IActionResult DeleteProduct([FromRoute] int id)
-        {
-            if (IsUserInRole("Admin"))
-            {
-                var existingProduct = _productService.Get(id);
-                if (existingProduct == null)
-                {
-                    return NotFound($"Producto con el ID: {id} no enctontrado");
-                }
-                _productService.DeleteProduct(id);
-                return Ok($"Producto con ID: {id} eliminado");
-            }
-            return Forbid();
-        }
-
         [HttpPut("{id}")]
-        public IActionResult UpdateProduct([FromRoute] int id, [FromBody] ProductUpdateRequest request)
+        public ActionResult UpdateProduct([FromRoute] int id, [FromBody] ProductUpdateRequest request)
         {
             if (IsUserInRole("Admin"))
             {
                 var existingProduct = _productService.Get(id);
                 if (existingProduct == null)
                 {
-                    return NotFound($"Producto con el ID: {id} no enctontrado");
+                    return NotFound($"Producto con el ID: {id} no encontrado");
                 }
                 _productService.UpdateProduct(id, request);
                 return Ok($"Producto con ID: {id} actualizado correctamente");
             }
             return Forbid();
         }
+
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public IActionResult DeleteProduct([FromRoute] int id)
+        {
+            if (IsUserInRole("Admin"))
+            {
+                try
+                {
+                    _productService.DeleteProduct(id);
+                    return Ok($"Producto con el ID: {id} eliminado correctamente.");
+                }
+                catch (Exception)
+                {
+                    return StatusCode(400, $"Error al eliminar el producto, tiene ventas asociadas");
+                }
+            }
+            return Forbid();
+        }
+
+
     }
 }
 

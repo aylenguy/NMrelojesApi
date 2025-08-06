@@ -18,7 +18,9 @@ namespace Domain.Entities
         // Clave foránea 
         [ForeignKey("ClientId")]
         public int ClientId { get; set; } 
-        public required Client Client { get; set; }
+        public Client Client { get; set; }
+
+
         public ICollection<DetalleVenta> DetalleVentas { get; set; } = new List<DetalleVenta>();
     }
 }

@@ -62,16 +62,20 @@ namespace Web.Controllers
             var venta = _ventaService.GetById(detalleVenta.VentaId);
             if (venta == null)
             {
-                return NotFound($" Ninguna venta encontrada con el ID: {detalleVenta.VentaId}");
+                return NotFound($"Ninguna venta encontrada con el ID: {detalleVenta.VentaId}");
             }
 
-            if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == venta.ClientId))
+            var isAdmin = IsUserInRole("Admin");
+            var isClient = IsUserInRole("Client");
+
+            if (isAdmin || (isClient && userId == venta.ClientId))
             {
                 return Ok(detalleVenta);
             }
 
             return Forbid();
         }
+
 
         [HttpGet("{productId}")]
         public IActionResult GetAllByProduct([FromRoute] int productId)
@@ -115,7 +119,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public IActionResult Add([FromBody] DetalleVentaDto dto)
+        public IActionResult AddDetalleVenta([FromBody] DetalleVentaDto dto)
         {
             var userId = GetUserId();
             if (userId == null)
@@ -131,11 +135,66 @@ namespace Web.Controllers
 
             if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == existingVenta.ClientId))
             {
-                var detalleVentaId = _detalleVentaService.AddDetalleVenta(dto);
-                return CreatedAtAction(nameof(GetById), new { id = detalleVentaId }, $"Creado el Detalle de Venta con el ID: {detalleVentaId}");
+                try
+                {
+                    var detalleVentaId = _detalleVentaService.AddDetalleVenta(dto);
+                    return CreatedAtAction(nameof(GetById), new { id = detalleVentaId }, $"Creado el Detalle de Venta con el ID: {detalleVentaId}");
+                }
+                catch (NotAllowedException ex)
+                {
+                    // Manejo específico de la excepción de stock insuficiente
+                    return BadRequest(new { message = ex.Message });
+                }
+                catch (Exception ex)
+                {
+                    // Manejo de cualquier otra excepción inesperada
+                    return StatusCode(500, new { message = "Ocurrió un error inesperado al agregar detalle de venta." });
+                }
             }
             return Forbid();
         }
+
+
+        [HttpPut("{id}")]
+        public IActionResult UpdateDetalleVenta([FromRoute] int id, [FromBody] DetalleVentaUpdateRequest request)
+        {
+            var userId = GetUserId();
+            if (userId == null)
+            {
+                return Forbid();
+            }
+
+            var existingDetalleVenta = _detalleVentaService.GetById(id);
+            if (existingDetalleVenta == null)
+            {
+                return NotFound($"Ningún Detalle de Venta encontrado con el ID: {id}");
+            }
+
+            var existingVenta = _ventaService.GetById(existingDetalleVenta.VentaId);
+            if (existingVenta == null)
+            {
+                return NotFound($"Ninguna venta encontrada con el ID: {existingDetalleVenta.VentaId}");
+            }
+
+            var isAdmin = IsUserInRole("Admin");
+            var isClient = IsUserInRole("Client");
+
+            if (isAdmin || (isClient && userId == existingVenta.ClientId))
+            {
+                try
+                {
+                    _detalleVentaService.UpdateDetalleVenta(id, request);
+                    return Ok($"Detalle de Venta con ID: {id} actualizado correctamente");
+                }
+                catch (NotAllowedException ex)
+                {
+                    return NotFound(ex.Message);
+                }
+            }
+
+            return Forbid();
+        }
+
 
         [HttpDelete("{id}")]
         public IActionResult DeleteDetalleVenta([FromRoute] int id)
@@ -167,41 +226,6 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpPut("{id}")]
-        public IActionResult UpdateDetalleVenta([FromRoute] int id, [FromBody] DetalleVentaUpdateRequest request)
-        {
-            var userId = GetUserId();
-            if (userId == null)
-            {
-                return Forbid();
-            }
-
-            var existingDetalleVenta = _detalleVentaService.GetById(id);
-            if (existingDetalleVenta == null)
-            {
-                return NotFound($"Ningún Detalle de Venta encontrado con el ID: {id}");
-            }
-
-            var existingVenta = _ventaService.GetById(existingDetalleVenta.VentaId);
-            if (existingVenta == null)
-            {
-                return NotFound($"Ninguna venta enocntrada con el ID: {existingDetalleVenta.VentaId}");
-            }
-
-            if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == existingVenta.ClientId))
-            {
-                try
-                {
-                    _detalleVentaService.UpdateDetalleVenta(id, request);
-                    return Ok($"Detalle de Venta con ID: {id} actualizado correctamente");
-                }
-                catch (NotAllowedException ex)
-                {
-                    return NotFound(ex.Message);
-                }
-            }
-
-            return Forbid();
-        }
+       
     }
 }

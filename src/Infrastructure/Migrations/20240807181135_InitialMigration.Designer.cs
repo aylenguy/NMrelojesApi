@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20240806192527_InitialMigration")]
+    [Migration("20240807181135_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -159,7 +159,7 @@ namespace Infrastructure.Migrations
                 {
                     b.HasBaseType("Domain.Entities.User");
 
-                    b.Property<string>("Address")
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -175,7 +175,7 @@ namespace Infrastructure.Migrations
                             Password = "1234",
                             UserName = "mati",
                             UserType = "Client",
-                            Address = "rueda 2217"
+                            PhoneNumber = "341678345"
                         });
                 });
 

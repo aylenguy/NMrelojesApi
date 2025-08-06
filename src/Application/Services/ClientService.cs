@@ -69,7 +69,7 @@ namespace Application.Services
                 clientToUpdate.LastName = request.LastName;
                 clientToUpdate.Email = request.Email;
                 clientToUpdate.UserName = request.UserName;
-                clientToUpdate.Address = request.Address;
+                clientToUpdate.PhoneNumber = request.PhoneNumber;
                 clientToUpdate.Password = request.Password;
                 
                 

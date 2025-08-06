@@ -38,7 +38,7 @@ namespace Infrastructure.Migrations
                     UserName = table.Column<string>(type: "TEXT", nullable: false),
                     Password = table.Column<string>(type: "TEXT", nullable: false),
                     UserType = table.Column<string>(type: "TEXT", maxLength: 8, nullable: false),
-                    Address = table.Column<string>(type: "TEXT", nullable: true)
+                    PhoneNumber = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -100,8 +100,8 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Users",
-                columns: new[] { "Id", "Address", "Email", "LastName", "Name", "Password", "UserName", "UserType" },
-                values: new object[] { 3, "rueda 2217", "matiasfernandez@gmail.com", "Fernandez", "Matias", "1234", "mati", "Client" });
+                columns: new[] { "Id", "Email", "LastName", "Name", "Password", "PhoneNumber", "UserName", "UserType" },
+                values: new object[] { 3, "matiasfernandez@gmail.com", "Fernandez", "Matias", "1234", "341678345", "mati", "Client" });
 
             migrationBuilder.InsertData(
                 table: "Users",

@@ -39,7 +39,7 @@ namespace Web.Controllers
         }
 
         [HttpGet("{clientId}")]
-        public IActionResult GetAllByClient([FromRoute] int clientId)
+        public ActionResult<IEnumerable<Venta>> GetAllByClient([FromRoute] int clientId)
         {
             var userId = GetUserId();
             if (userId == null)
@@ -53,6 +53,7 @@ namespace Web.Controllers
             }
             return Forbid();
         }
+
 
         [HttpGet("{id}")]
         public IActionResult GetById([FromRoute] int id)
@@ -70,7 +71,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public IActionResult Add([FromBody] VentaDto dto)
+        public IActionResult AddVenta([FromBody] VentaDto dto)
         {
             var userId = GetUserId();
             if (userId == null)
@@ -84,6 +85,24 @@ namespace Web.Controllers
             }
             return Forbid();
         }
+
+        [HttpPut("{id}")]
+        public ActionResult UpdateVenta([FromRoute] int id, [FromBody] VentaDto dto)
+        {
+            if (IsUserInRole("Admin"))
+            {
+                var existingVenta = _ventaService.GetById(id);
+                if (existingVenta == null)
+                {
+                    return NotFound($"Venta con ID {id} no encontrada");
+                }
+
+                _ventaService.UpdateVenta(id, dto);
+                return Ok($"Venta con ID: {id} actualizada correctamente");
+            }
+            return Forbid();
+        }
+
 
         [HttpDelete("{id}")]
         public IActionResult DeleteVenta([FromRoute] int id)
@@ -108,21 +127,6 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpPut("{id}")]
-        public IActionResult UpdateVenta([FromRoute] int id, [FromBody] VentaDto dto)
-        {
-            if (IsUserInRole("Admin"))
-            {
-                var existingVenta = _ventaService.GetById(id);
-                if (existingVenta == null)
-                {
-                    return NotFound($"Venta con ID {id} no encontrada");
-                }
-
-                _ventaService.UpdateVenta(id, dto);
-                return Ok($"Venta con ID: {id} actualizada correctamente");
-            }
-            return Forbid();
-        }
+        
     }
 }

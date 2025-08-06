@@ -55,6 +55,7 @@ namespace Application.Services
             }
         }
 
+
         public void UpdateProduct(int id, ProductUpdateRequest request)
         {
             var productToUpdate = _repository.Get(id);

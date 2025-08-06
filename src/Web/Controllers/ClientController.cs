@@ -39,16 +39,32 @@ namespace Web.Controllers
             return null;
         }
 
-
         [HttpGet]
         [Authorize]
-        public IActionResult GetAll()
+        public ActionResult<IEnumerable<Client>> GetAllClients()
         {
             if (IsUserInRole("Admin"))
             {
                 return Ok(_service.GetAllClients());
             }
-            // Si el rol no es Admin o el claim no existe, prohibir acceso
+
+            return Forbid();
+        }
+
+
+        [HttpGet("{lastName}")]
+        [Authorize]
+        public IActionResult GetByLastName([FromRoute] string lastName)
+        {
+            if (IsUserInRole("Admin"))
+            {
+                var client = _service.GetByLastName(lastName); 
+                if (client == null)
+                {
+                    return NotFound($"Ningún cliente encontrado con el apellido: {lastName}");
+                }
+                return Ok(client);
+            }
             return Forbid();
         }
 
@@ -68,28 +84,40 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpGet("{lastName}")]
-        [Authorize]
-        public IActionResult GetByLastName([FromRoute] string lastName)
-        {
-            if (IsUserInRole("Admin"))
-            {
-                var client = _service.GetByLastName(lastName); 
-                if (client == null)
-                {
-                    return NotFound($"Ningún cliente encontrado con el apellido: {lastName}");
-                }
-                return Ok(client);
-            }
-            return Forbid();
-        }
-
         [HttpPost]
-        
+
         public IActionResult Add([FromBody] ClientCreateRequest body)
         {
             var newClient = _service.AddClient(body);
             return CreatedAtAction(nameof(GetById), new { id = newClient }, $"Creado el Cliente con el ID: {newClient}");
+        }
+        
+
+
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public IActionResult UpdateClient([FromRoute] int id, [FromBody] ClientUpdateRequest request)
+        {
+            var userId = GetUserId();
+            if (userId == null)
+            {
+                return Forbid();
+            }
+
+            var clientExisting = _service.Get(id);
+            if (clientExisting == null)
+            {
+                return NotFound($"Ningún Cliente encontrado con el ID: {id}");
+            }
+
+            if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == id))
+            {
+                _service.UpdateClient(id, request);
+                return Ok($"Cliente con ID: {id} actualizado correctamente");
+            }
+
+            return Forbid();
         }
 
         [HttpDelete("{id}")]
@@ -117,29 +145,6 @@ namespace Web.Controllers
             return Forbid();
         }
 
-        [HttpPut("{id}")]
-        [Authorize]
-        public IActionResult UpdateClient([FromRoute] int id, [FromBody] ClientUpdateRequest request)
-        {
-            var userId = GetUserId();
-            if (userId == null)
-            {
-                return Forbid();
-            }
-
-            var clientExisting = _service.Get(id);
-            if (clientExisting == null)
-            {
-                return NotFound($"Ningún Cliente encontrado con el ID: {id}");
-            }
-
-            if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == id))
-            {
-                _service.UpdateClient(id, request);
-                return Ok($"Cliente con ID: {id} actualizado correctamente");
-            }
-
-            return Forbid();
-        }
     }
 }
+
