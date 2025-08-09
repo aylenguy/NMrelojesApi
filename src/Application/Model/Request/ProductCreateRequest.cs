@@ -1,19 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Application.Models.Requests
+public class ProductCreateRequest
 {
-    public class ProductCreateRequest
-    {
-        [Required]
-        public string Name { get; set; }
-        [Required]
-        public decimal Price { get; set; }
-        [Required]
-        public int Stock { get; set; }
-    }
+    [Required]
+    public string Name { get; set; }
+
+    [Required]
+    public decimal Price { get; set; }
+
+    public decimal? OldPrice { get; set; }
+
+    public string Image { get; set; }
+
+    public string Description { get; set; }
+
+    public string Color { get; set; }
+
+    public List<string> Caracteristicas { get; set; } = new();
+
+    [Required]
+    public int Stock { get; set; }
 }

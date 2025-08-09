@@ -78,13 +78,26 @@ namespace Web.Controllers
             {
                 return Forbid();
             }
-            if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == dto.ClientId))
+
+            if (IsUserInRole("Admin"))
             {
+                // Si es admin, puede crear venta para cualquier cliente
                 var ventaId = _ventaService.AddVenta(dto);
                 return CreatedAtAction(nameof(GetById), new { id = ventaId }, $"Venta creada con el ID: {ventaId}");
             }
+
+            if (IsUserInRole("Client"))
+            {
+                // Sobrescribir ClientId con el del token
+                dto.ClientId = userId.Value;
+
+                var ventaId = _ventaService.AddVenta(dto);
+                return CreatedAtAction(nameof(GetById), new { id = ventaId }, $"Venta creada con el ID: {ventaId}");
+            }
+
             return Forbid();
         }
+
 
         [HttpPut("{id}")]
         public ActionResult UpdateVenta([FromRoute] int id, [FromBody] VentaDto dto)

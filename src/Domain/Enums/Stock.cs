@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace Domain.Enums
 {
-    public enum StockStatus
+    internal class Stock
+
     {
-        OutOfStock,
-        Available
     }
 }

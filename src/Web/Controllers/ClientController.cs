@@ -1,150 +1,49 @@
 ﻿using Application.Interfaces;
 using Application.Models.Requests;
-using Application.Services;
-using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Net;
 using System.Security.Claims;
-
 
 namespace Web.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class ClientController : ControllerBase
     {
-        private readonly IClientService _service;
+        private readonly IClientService _clientService;
+        private readonly ICustomAuthenticationService _authService;
 
-        public ClientController(IClientService service)
+        public ClientController(IClientService clientService, ICustomAuthenticationService authService)
         {
-            _service = service;
+            _clientService = clientService;
+            _authService = authService;
         }
 
-        private bool IsUserInRole(string role)
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public IActionResult Register([FromBody] ClientRegisterRequest request)
         {
-            var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role); 
-            return roleClaim != null && roleClaim.Value == role; 
+            var clientId = _clientService.RegisterClient(request);
+            return Ok(new { Message = "Cliente registrado correctamente", ClientId = clientId });
         }
 
-        private int? GetUserId() //Funcion para obtener el userId de las claims del usuario autenticado en el contexto de la solicitud actual.
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public IActionResult Login([FromBody] CredentialsDtoRequest request)
         {
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
-            {
-                return userId;
-            }
-            return null;
+            var token = _authService.Authenticate(request);
+            return Ok(new { Token = token });
         }
 
-        [HttpGet]
-        [Authorize]
-        public ActionResult<IEnumerable<Client>> GetAllClients()
+        [HttpGet("profile")]
+        [Authorize(Roles = "Client")]
+        public IActionResult Profile()
         {
-            if (IsUserInRole("Admin"))
-            {
-                return Ok(_service.GetAllClients());
-            }
+            var userId = User.FindFirst("sub")?.Value;
+            var email = User.FindFirst("email")?.Value;
+            var username = User.FindFirst("username")?.Value;
 
-            return Forbid();
+            return Ok(new { Id = userId, Email = email, UserName = username });
         }
-
-
-        [HttpGet("{lastName}")]
-        [Authorize]
-        public IActionResult GetByLastName([FromRoute] string lastName)
-        {
-            if (IsUserInRole("Admin"))
-            {
-                var client = _service.GetByLastName(lastName); 
-                if (client == null)
-                {
-                    return NotFound($"Ningún cliente encontrado con el apellido: {lastName}");
-                }
-                return Ok(client);
-            }
-            return Forbid();
-        }
-
-        [HttpGet("{id}")]
-        [Authorize]
-        public IActionResult GetById([FromRoute] int id)
-        {
-            if (IsUserInRole("Admin"))
-            {
-                var client = _service.Get(id);
-                if (client == null)
-                {
-                    return NotFound($"Ningún cliente encontrado con el ID: {id}");
-                }
-                return Ok(client);
-            }
-            return Forbid();
-        }
-
-        [HttpPost]
-
-        public IActionResult Add([FromBody] ClientCreateRequest body)
-        {
-            var newClient = _service.AddClient(body);
-            return CreatedAtAction(nameof(GetById), new { id = newClient }, $"Creado el Cliente con el ID: {newClient}");
-        }
-        
-
-
-
-        [HttpPut("{id}")]
-        [Authorize]
-        public IActionResult UpdateClient([FromRoute] int id, [FromBody] ClientUpdateRequest request)
-        {
-            var userId = GetUserId();
-            if (userId == null)
-            {
-                return Forbid();
-            }
-
-            var clientExisting = _service.Get(id);
-            if (clientExisting == null)
-            {
-                return NotFound($"Ningún Cliente encontrado con el ID: {id}");
-            }
-
-            if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == id))
-            {
-                _service.UpdateClient(id, request);
-                return Ok($"Cliente con ID: {id} actualizado correctamente");
-            }
-
-            return Forbid();
-        }
-
-        [HttpDelete("{id}")]
-        [Authorize]
-        public IActionResult DeleteClient([FromRoute] int id)
-        {
-            var userId = GetUserId();
-            if (userId == null)
-            {
-                return Forbid();
-            }
-
-            var clientExisting = _service.Get(id);
-            if (clientExisting == null)
-            {
-                return NotFound($"Ningún Cliente encontrado con el ID: {id}");
-            }
-
-            if (IsUserInRole("Admin") || (IsUserInRole("Client") && userId == id))
-            {
-                _service.DeleteClient(id);
-                return Ok($"Eliminado el Cliente con ID: {id} ");
-            }
-
-            return Forbid();
-        }
-
     }
 }
-

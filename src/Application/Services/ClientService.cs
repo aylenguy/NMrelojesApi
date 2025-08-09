@@ -2,81 +2,40 @@
 using Application.Models.Requests;
 using Domain.Entities;
 using Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
     public class ClientService : IClientService
     {
-        private readonly IClientRepository _repository;
-        public ClientService(IClientRepository repository)
+        private readonly IUserRepository _userRepository;
+        private readonly IPasswordService _passwordService;  // <-- inyectar
+
+        public ClientService(IUserRepository userRepository, IPasswordService passwordService)
         {
-            _repository = repository;
+            _userRepository = userRepository;
+            _passwordService = passwordService;  // <-- asignar
         }
 
-        public List<Client> GetAllClients()
+        public int RegisterClient(ClientRegisterRequest request)
         {
-            return _repository.Get();
-        }
+            if (_userRepository.GetUserByEmail(request.Email) != null)
+                throw new Exception("El email ya está registrado");
 
-        public Client? Get(int id)
-        {
-            return _repository.Get(id);
-        }
+            // Usar PasswordService para hashear la contraseña
+            var hashedPassword = _passwordService.HashPassword(request.Password);
 
-        public Client? GetByLastName(string lastName)
-        {
-            return _repository.GetByLastName(lastName);
-        }
-
-
-        public int AddClient(ClientCreateRequest request)
-        {
-            var client = new Client()
+            var client = new User
             {
-                Name = request.Name,
-                LastName = request.LastName,
                 Email = request.Email,
                 UserName = request.UserName,
-                PhoneNumber = request.PhoneNumber,
-                Password = request.Password,
-                UserType = "Client",
+                Name = request.Name,
+                LastName = request.LastName,
+                PasswordHash = hashedPassword,
+                UserType = "Client"
             };
-            return _repository.Add(client).Id;
-        }
 
-        public void DeleteClient(int id)
-        {
-            var clientToDelete = _repository.Get(id);
-            if (clientToDelete != null)
-            {
-                _repository.Delete(clientToDelete);
-            }
-        }
-
-        public void UpdateClient(int id, ClientUpdateRequest request)
-        {
-            var clientToUpdate = _repository.Get(id);
-            if (clientToUpdate != null)
-
-            {
-                clientToUpdate.Name = request.Name;
-                clientToUpdate.LastName = request.LastName;
-                clientToUpdate.Email = request.Email;
-                clientToUpdate.UserName = request.UserName;
-                clientToUpdate.PhoneNumber = request.PhoneNumber;
-                clientToUpdate.Password = request.Password;
-                
-                
-                
-
-                _repository.Update(clientToUpdate);
-            }
+            _userRepository.Add(client);
+            return client.Id;
         }
     }
 }

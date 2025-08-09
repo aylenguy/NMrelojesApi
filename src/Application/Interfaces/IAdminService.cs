@@ -1,10 +1,6 @@
-﻿using Application.Models.Requests;
-using Domain.Entities;
-using System;
+﻿using Domain.Entities;
+using Application.Models.Requests;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
@@ -13,8 +9,10 @@ namespace Application.Interfaces
         List<Admin> GetAllAdmins();
         Admin? Get(int id);
         Admin? Get(string name);
+        Admin? GetByEmail(string email);
+
         int AddAdmin(AdminCreateRequest request);
-        void DeleteAdmin(int id);
         void UpdateAdmin(int id, AdminUpdateRequest request);
+        void DeleteAdmin(int id);
     }
 }

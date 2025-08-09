@@ -1,29 +1,74 @@
-﻿using Application.Models.Requests;
+﻿using Application.Interfaces;
+using Application.Models.Requests;
 using Domain.Entities;
 using Domain.Interfaces;
+using Domain.Exceptions;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.IdentityModel.Tokens;
-using Domain.Exceptions;
-using Application.Interfaces;
 
 namespace Infrastructure.Services
 {
     public class AuthenticateService : ICustomAuthenticationService
     {
         private readonly IUserRepository _userRepository;
-        private readonly AuthenticateServiceOptions _options;
+        private readonly IAdminRepository _adminRepository;
+        private readonly JwtOptions _options;
+        private readonly IPasswordService _passwordService;
 
-        public AuthenticateService(IUserRepository userRepository, IOptions<AuthenticateServiceOptions> options)
+        public AuthenticateService(
+     IUserRepository userRepository,
+     IAdminRepository adminRepository,
+     IPasswordService passwordService,        // nuevo parámetro
+     IOptions<JwtOptions> options)
         {
             _userRepository = userRepository;
+            _adminRepository = adminRepository;
+            _passwordService = passwordService;       // asignación
             _options = options.Value;
+        }
+        // Genera el token
+        private string GenerateToken(string id, string email, string? username, string role)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
+    {
+        new Claim("sub", id),
+        new Claim("email", email),
+        new Claim(ClaimTypes.Role, role) // <-- cambio importante
+    };
+
+            if (!string.IsNullOrEmpty(username))
+                claims.Add(new Claim("username", username));
+
+            var token = new JwtSecurityToken(
+                _options.Issuer,
+                _options.Audience,
+                claims,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        // Usuario normal
+        public string Authenticate(CredentialsDtoRequest credentialsRequest)
+        {
+            var user = ValidateUser(credentialsRequest);
+            if (user == null)
+                throw new NotAllowedException("User authentication failed");
+
+            return GenerateToken(
+                user.Id.ToString(),
+                user.Email,
+                user.UserName,
+                user.UserType);
         }
 
         private User? ValidateUser(CredentialsDtoRequest credentialsRequest)
@@ -32,60 +77,37 @@ namespace Infrastructure.Services
                 return null;
 
             var user = _userRepository.GetUserByEmail(credentialsRequest.Email);
-
             if (user == null) return null;
 
-            if (user.Password == credentialsRequest.Password) return user;
+            // Usar PasswordService para verificar
+            if (!_passwordService.VerifyPassword(credentialsRequest.Password, user.PasswordHash))
+                return null;
 
-            return null;
+            return user;
         }
 
-        public string Authenticate(CredentialsDtoRequest credentialsRequest)
+        // Admin
+        public string AuthenticateAdmin(CredentialsDtoRequest credentialsRequest)
         {
-            //Paso 1: Validamos las credenciales
-            var user = ValidateUser(credentialsRequest); //Lo primero que hacemos es llamar a una función que valide los parámetros que enviamos.
+            if (string.IsNullOrEmpty(credentialsRequest.Email) || string.IsNullOrEmpty(credentialsRequest.Password))
+                throw new NotAllowedException("Credenciales inválidas");
 
-            if (user == null)
-            {
-                throw new NotAllowedException("User authentication failed");
-            }
+            var admin = _adminRepository.GetByEmail(credentialsRequest.Email);
+            if (admin == null)
+                throw new NotAllowedException("Admin no encontrado");
 
+            // Usar PasswordService para verificar
+            if (!_passwordService.VerifyPassword(credentialsRequest.Password, admin.PasswordHash))
+                throw new NotAllowedException("Credenciales inválidas");
 
-            //Paso 2: Crear el token
-            var securityPassword = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_options.SecretForKey)); //Traemos la SecretKey del Json. agregar antes: using Microsoft.IdentityModel.Tokens;
-
-            var credentials = new SigningCredentials(securityPassword, SecurityAlgorithms.HmacSha256);
-
-            //Los claims son datos en clave->valor que nos permite guardar data del usuario.
-            var claimsForToken = new List<Claim>();
-            claimsForToken.Add(new Claim("sub", user.Id.ToString())); //"sub" es una key estándar que significa unique user identifier, es decir, si mandamos el id del usuario por convención lo hacemos con la key "sub".
-            claimsForToken.Add(new Claim("email", user.Email)); //Lo mismo para email y username, son las convenciones para email y nombre de usuario. Ustedes pueden usar lo que quieran, pero si alguien que no conoce la app
-            claimsForToken.Add(new Claim("username", user.UserName)); //quiere usar la API por lo general lo que espera es que se estén usando estas keys.
-            claimsForToken.Add(new Claim("role", user.UserType)); //Debería venir del usuario
-            //claimsForToken.Add(new Claim("role", credentialsRequest.UserType)); //Debería venir del usuario
-
-            var jwtSecurityToken = new JwtSecurityToken( //agregar using System.IdentityModel.Tokens.Jwt; Acá es donde se crea el token con toda la data que le pasamos antes.
-              _options.Issuer,
-              _options.Audience,
-              claimsForToken,
-              DateTime.UtcNow,
-              DateTime.UtcNow.AddHours(1),
-              credentials);
-
-            var tokenToReturn = new JwtSecurityTokenHandler() //Pasamos el token a string
-                .WriteToken(jwtSecurityToken);
-
-            return tokenToReturn.ToString();
-
+            return GenerateToken(admin.Id.ToString(), admin.Email, null, "Admin");
         }
-
-        public class AuthenticateServiceOptions
+        // Configuración para JWT
+        public class JwtOptions
         {
-            public const string AuthenticateService = "AuthenticateService";
-
-            public string Issuer { get; set; }
-            public string Audience { get; set; }
-            public string SecretForKey { get; set; }
+            public string Issuer { get; set; } = "";
+            public string Audience { get; set; } = "";
+            public string Key { get; set; } = "";
         }
     }
 }

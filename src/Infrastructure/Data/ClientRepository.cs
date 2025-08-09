@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
+using Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,18 +9,25 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Data
 {
-    public class ClientRepository : RepositoryBase<Client>, IClientRepository
+    public class ClientRepository : IClientRepository
     {
         private readonly ApplicationContext _context;
-        public ClientRepository(ApplicationContext context) : base(context)
+
+        public ClientRepository(ApplicationContext context)
         {
             _context = context;
         }
 
-        public Client? GetByLastName(string lastName)
+        public User? GetClientByEmail(string email)
         {
-            return _context.Clients.FirstOrDefault(c => c.LastName == lastName);
+            return _context.Users.FirstOrDefault(u => u.Email == email && u.UserType == "Client");
         }
 
+        public void Add(User client)
+        {
+            _context.Users.Add(client);
+            _context.SaveChanges();
+        }
     }
 }
+

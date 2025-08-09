@@ -15,6 +15,22 @@ namespace Infrastructure.Data
             _context = context;
         }
 
+        public int Add(DetalleVenta detalle)
+        {
+            _context.DetalleVentas.Add(detalle);
+            _context.SaveChanges();
+            return detalle.Id;
+        }
+
+        public void Delete(int id)
+        {
+            var detalle = _context.DetalleVentas.FirstOrDefault(d => d.Id == id);
+            if (detalle != null)
+            {
+                _context.DetalleVentas.Remove(detalle);
+                _context.SaveChanges();
+            }
+        }
         public DetalleVenta? GetById(int id)
         {
             return _context.DetalleVentas

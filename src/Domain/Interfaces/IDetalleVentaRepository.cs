@@ -15,5 +15,9 @@ namespace Domain.Interfaces
         List<DetalleVenta> GetAllByClient(int clientId);
         bool VentaExists(int saleOrderId);
         Product? GetProduct(int productId);
+
+        void Delete(int id);
+
+        int Add(DetalleVenta detalle);
     }
 }

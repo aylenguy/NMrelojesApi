@@ -2,17 +2,14 @@
 using Application.Models.Requests;
 using Domain.Entities;
 using Domain.Interfaces;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Application.Services
+namespace Infrastructure.Services
 {
     public class AdminService : IAdminService
     {
         private readonly IAdminRepository _repository;
+
         public AdminService(IAdminRepository repository)
         {
             _repository = repository;
@@ -33,7 +30,6 @@ namespace Application.Services
             return _repository.Get(name);
         }
 
-
         public int AddAdmin(AdminCreateRequest request)
         {
             var admin = new Admin()
@@ -42,7 +38,6 @@ namespace Application.Services
                 LastName = request.LastName,
                 Email = request.Email,
                 UserName = request.UserName,
-                Password = request.Password,
                 UserType = "Admin"
             };
             return _repository.Add(admin).Id;
@@ -66,11 +61,15 @@ namespace Application.Services
                 adminToUpdate.LastName = request.LastName;
                 adminToUpdate.Email = request.Email;
                 adminToUpdate.UserName = request.UserName;
-                adminToUpdate.Password = request.Password;
-               
+              
 
                 _repository.Update(adminToUpdate);
             }
+        }
+
+        public Admin? GetByEmail(string email)
+        {
+            return _repository.GetByEmail(email);
         }
     }
 }

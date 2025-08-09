@@ -31,6 +31,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public IActionResult GetAll()
         {
             if (IsUserInRole("Admin"))

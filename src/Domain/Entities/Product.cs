@@ -14,17 +14,16 @@ namespace Domain.Entities
 {
     public class Product
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-
-        [Required]
         public string Name { get; set; }
-
-        [Required]
         public decimal Price { get; set; }
+        public decimal? OldPrice { get; set; }
+        public string Image { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Specs { get; set; } = string.Empty;
+        public string? Color { get; set; } // ← con "?" se hace opcional (nullable)
 
         public int Stock { get; set; }
-        public StockStatus StockStatus => Stock > 0 ? StockStatus.Available : StockStatus.OutOfStock;
     }
+
 }

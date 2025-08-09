@@ -1,26 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
     public class Venta
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        public DateTime Date { get; set; } = DateTime.Now;
+        public int ClientId { get; set; }
 
-        // Clave foránea 
-        [ForeignKey("ClientId")]
-        public int ClientId { get; set; } 
-        public Client Client { get; set; }
+        // Inicializada para evitar advertencia de null
+        public Client Client { get; set; } = null!;
 
+        public DateTime Fecha { get; set; }
+        public decimal Total { get; set; }
 
+        // Inicializada para evitar advertencia de null
         public ICollection<DetalleVenta> DetalleVentas { get; set; } = new List<DetalleVenta>();
     }
 }

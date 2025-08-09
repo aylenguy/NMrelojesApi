@@ -1,92 +1,104 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using System;
 
-
-//aca interactúan las entidades con la base de datos.
 namespace Infrastructure.Data
 {
+    // Esta clase representa el contexto principal de EF Core.
+    // Acá se configuran las tablas (DbSet) y las relaciones con Fluent API.
     public class ApplicationContext : DbContext
     {
-        //dbset recibe una entidad y la representa en una tabla en la base de datos
+        // Cada DbSet representa una tabla en la base de datos.
         public DbSet<User> Users { get; set; }
         public DbSet<Client> Clients { get; set; }
         public DbSet<Admin> Admins { get; set; }
         public DbSet<Product> Products { get; set; }
-        public DbSet<Venta> Ventas { get; set; } 
+
+        public DbSet<Venta> Ventas { get; set; }
         public DbSet<DetalleVenta> DetalleVentas { get; set; }
+
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
 
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
-
         }
-        //---Fuent API---
-        // Este método (OnModelCreating) se usa para definir cómo se deben mapear las entidades del dominio a las tablas de la base de datos
-        // y establecer sus relaciones, conversiones (el enum a cadena) y datos iniciales (Seed Data).
+
+        //--- Fluent API ---
+        // Se usa para configurar cómo se mapearán las entidades a tablas y establecer relaciones, constraints y datos iniciales.
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Configuración para herencia en Users
             modelBuilder.Entity<User>()
                 .HasDiscriminator<string>("UserType")
                 .HasValue<Client>("Client")
                 .HasValue<Admin>("Admin");
 
-            modelBuilder.Entity<Admin>().HasData(
-                new Admin
-                {
-                    Name = "Aylen",
-                    LastName = "Guy",
-                    Email = "aylenguy@gmail.com",
-                    UserName = "aylu",
-                    Password = "123",
-                    Id = 5,
-                    UserType = "Admin"
-                });
+            // Seed de usuario administrador
+            modelBuilder.Entity<Admin>().HasData(new Admin
+            {
+                Id = 1,
+                Email = "aylenguy@gmail.com",
+                Name = "Aylen",
+                LastName = "Guy",
+                UserName = "aylen",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123"),
+                UserType = "Admin"
+            });
 
-            modelBuilder.Entity<Client>().HasData(
-                new Client
-                {
-                    Name = "Matias",
-                    LastName = "Fernandez",
-                    Email = "matiasfernandez@gmail.com",
-                    UserName = "mati",
-                    PhoneNumber = "341678345",
-                    Password = "1234",
-                    Id = 3,
-                    UserType = "Client"
-                });
-
+            // Seed de producto inicial
             modelBuilder.Entity<Product>().HasData(
                 new Product
                 {
                     Id = 1,
-                    Name = "remera",
-                    Price = 10500,
-                    Stock = 10
-                });
+                    Name = "Reloj Deportivo",
+                    Price = 105000,
+                    OldPrice = 120000,
+                    Stock = 15,
+                    Image = "reloj-deportivo.jpg",
+                    Description = "Reloj deportivo resistente al agua, ideal para actividades al aire libre.",
+                    Color = "Negro",
+                    Specs = "Cronómetro, GPS, sumergible hasta 50m"
+                }
+            );
 
-            // Relación entre Cliente y Venta (uno a muchos). Client tiene muchas Ventas y una Venta pertenece a un Client
+            // Relación Client -> Venta (1:N)
             modelBuilder.Entity<Client>()
                 .HasMany(c => c.Ventas)
                 .WithOne(o => o.Client)
                 .HasForeignKey(o => o.ClientId)
-                .OnDelete(DeleteBehavior.Cascade); // Si se elimina un Cliente, se eliminan todos los Ventas asociados.
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Relación entre Venta y DetalleVenta (uno a muchos). Venta tiene muchos DetalleVentas y un DetalleVenta pertenece a una Venta
+            // Relación Venta -> DetalleVenta (1:N)
             modelBuilder.Entity<Venta>()
                 .HasMany(o => o.DetalleVentas)
                 .WithOne(l => l.Venta)
                 .HasForeignKey(l => l.VentaId)
-                .OnDelete(DeleteBehavior.Cascade); // SI se elimina una Venta, se eliminan todos los DetalleVentas asociados.
+                .OnDelete(DeleteBehavior.Cascade);
 
-            //  DetalleVenta pertenece a un Product, pero no se elimina el Product si tiene DetalleVentas que lo referencian 
+            // DetalleVenta -> Product (N:1) con restricción para no borrar producto si hay ventas
             modelBuilder.Entity<DetalleVenta>()
-                .HasOne(sol => sol.Product)
-                .WithMany() 
-                .HasForeignKey(sol => sol.ProductId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .HasOne(d => d.Product)
+                .WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relación Cart -> CartItems (1:N)
+            modelBuilder.Entity<Cart>()
+                .HasMany(c => c.Items)
+                .WithOne(i => i.Cart)
+                .HasForeignKey(i => i.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // CartItem -> Product (N:1) con restricción
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Product)
+                .WithMany()
+                .HasForeignKey(ci => ci.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             base.OnModelCreating(modelBuilder);
         }
     }
 }
+

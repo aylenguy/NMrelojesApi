@@ -13,5 +13,6 @@ namespace Domain.Entities
     {
         public string PhoneNumber { get; set; }
         public ICollection<Venta> Ventas { get; set; } = new List<Venta>();
+
     }
 }

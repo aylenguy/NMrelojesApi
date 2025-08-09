@@ -1,28 +1,53 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
-using Microsoft.EntityFrameworkCore.Query.Internal;
-using System;
+using Infrastructure.Data;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Infrastructure.Data
+namespace Infrastructure.Repositories
 {
-    public class ProductRepository : RepositoryBase<Product>, IProductRepository
+    public class ProductRepository : IProductRepository
     {
-        private readonly ApplicationContext _context;
+        private readonly ApplicationContext _ctx;
 
-        public ProductRepository(ApplicationContext context) : base(context)
+        public ProductRepository(ApplicationContext ctx)
         {
-            _context = context;
+            _ctx = ctx;
+        }
+
+        public Product Add(Product p)
+        {
+            _ctx.Products.Add(p);
+            _ctx.SaveChanges();
+            return p;
+        }
+
+        public void Delete(Product p)
+        {
+            _ctx.Products.Remove(p);
+            _ctx.SaveChanges();
+        }
+
+        public Product? Get(int id)
+        {
+            return _ctx.Products.FirstOrDefault(p => p.Id == id);
         }
 
         public Product? Get(string name)
         {
-            return _context.Products.FirstOrDefault(p => p.Name == name);
+            return _ctx.Products.FirstOrDefault(p => p.Name == name);
         }
 
-       
+        public List<Product> Get()
+        {
+            return _ctx.Products.ToList();
+        }
+
+        public void Update(Product p)
+        {
+            _ctx.Products.Update(p);
+            _ctx.SaveChanges();
+        }
     }
 }
+

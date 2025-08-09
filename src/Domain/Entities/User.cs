@@ -1,35 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Domain.Entities
+﻿public class User
 {
-    public class User
-    {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+    public int Id { get; set; }
+    public string Email { get; set; } = null!;
+    public string UserType { get; set; } = null!;
+    public string? UserName { get; set; }
+    public string? Name { get; set; }
+    public string? LastName { get; set; }
 
-        [Required]
-        public required string Name { get; set; }
+    // Si es un hash real debería ser byte[], pero lo dejo string si tu implementación es así
+    public string PasswordHash { get; set; } = string.Empty;
 
-        [Required]
-        public required string LastName { get; set; }
-
-        [Required]
-        public string Email { get; set; }
-
-        [Required]
-        public string UserName { get; set; }
-
-        [Required]
-        public string Password { get; set; }
-
-        [Required]
-        public string UserType { get; set; }
-    }
+    // Si guardas la contraseña en texto plano (mala práctica) se queda aquí
+   
 }
+

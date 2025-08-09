@@ -1,17 +1,15 @@
 ﻿using Domain.Entities;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Interfaces
 {
-    public interface IProductRepository : IRepositoryBase<Product>
+    public interface IProductRepository
     {
+        Product? Get(int id);
         Product? Get(string name);
-        
-
-
+        List<Product> Get();
+        Product Add(Product p);
+        void Update(Product p);
+        void Delete(Product p);
     }
 }

@@ -1,10 +1,12 @@
 ﻿using Application.Interfaces;
+using Application.Models.DTOs;
 using Application.Models.Requests;
 using Domain.Entities;
 using Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,15 +20,32 @@ namespace Application.Services
         {
             _repository = repository;
         }
-        public List<Product> GetAllProducts()
+        public List<ProductDto> GetAllProducts()
         {
-            return _repository.Get();
+            return _repository.Get().Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Nombre = p.Name,
+                Precio = p.Price,
+                PrecioAnterior = p.OldPrice,
+                Imagen = p.Image,
+                Descripcion = p.Description,
+                Color = p.Color,
+                Caracteristicas = string.IsNullOrEmpty(p.Specs)
+    ? new List<string>()
+    : p.Specs.Split(',').ToList()
+
+            }).ToList();
         }
 
-        
         public Product? Get(string name)
         {
             return _repository.Get(name);
+        }
+
+        public Product? GetById(int id)
+        {
+            return _repository.Get(id);
         }
 
         public Product? Get(int id)
@@ -40,7 +59,12 @@ namespace Application.Services
             {
                 Name = request.Name,
                 Price = request.Price,
-                Stock = request.Stock,
+                OldPrice = request.OldPrice,
+                Image = request.Image,
+                Description = request.Description,
+                Color = request.Color,
+                Specs = string.Join(",", request.Caracteristicas),
+                Stock = request.Stock
             };
             return _repository.Add(product).Id;
         }
@@ -63,11 +87,17 @@ namespace Application.Services
             {
                 productToUpdate.Price = request.Price;
                 productToUpdate.Stock = request.Stock;
-
+                productToUpdate.OldPrice = request.OldPrice;
+                productToUpdate.Image = request.Image;
+                productToUpdate.Description = request.Description;
+                productToUpdate.Color = request.Color;
+                productToUpdate.Specs = string.Join(",", request.Caracteristicas);
 
                 _repository.Update(productToUpdate);
             }
         }
     }
 }
+
+
 

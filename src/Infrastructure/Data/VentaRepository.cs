@@ -1,39 +1,52 @@
-﻿using Domain.Entities;
-using Domain.Interfaces;
+﻿using Application.Interfaces;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Infrastructure.Data
 {
-    public class VentaRepository : RepositoryBase<Venta>, IVentaRepository
+    public class VentaRepository : IVentaRepository
     {
         private readonly ApplicationContext _context;
 
-        public VentaRepository(ApplicationContext context) : base(context)
+        public VentaRepository(ApplicationContext context)
         {
             _context = context;
         }
 
         public List<Venta> GetAllByClient(int clientId)
         {
-            return GetVentas()
-                .Where(r => r.ClientId == clientId)
+            return _context.Ventas
+                .Include(v => v.Client)
+                .Include(v => v.DetalleVentas)
+                    .ThenInclude(dv => dv.Product)
+                .Where(v => v.ClientId == clientId)
                 .ToList();
         }
 
         public Venta? GetById(int id)
         {
-            return GetVentas()
-                .SingleOrDefault(x => x.Id == id);
+            return _context.Ventas
+                .Include(v => v.Client)
+                .Include(v => v.DetalleVentas)
+                    .ThenInclude(dv => dv.Product)
+                .SingleOrDefault(v => v.Id == id);
         }
 
-        private IQueryable<Venta> GetVentas()
+        public void Add(Venta venta)
         {
-            return _context.Ventas
-                .Include(r => r.Client)
-                .Include(r => r.DetalleVentas)
-                .ThenInclude(dv => dv.Product);
+            _context.Ventas.Add(venta);
+            _context.SaveChanges(); // Esto ya asigna venta.Id
+        }
+        public void Update(Venta venta)
+        {
+            _context.Ventas.Update(venta);
+        }
+
+        public void Delete(Venta venta)
+        {
+            _context.Ventas.Remove(venta);
         }
     }
 }

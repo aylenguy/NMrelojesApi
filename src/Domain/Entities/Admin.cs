@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-
-namespace Domain.Entities
+﻿public class Admin : User
 {
-    public class Admin : User
-    {
-      
-    }
+    // Aquí no agregues PasswordHash si ya está en User
 }
