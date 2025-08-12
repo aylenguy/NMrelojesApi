@@ -2,7 +2,6 @@
 using Application.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Web.Controllers
 {
@@ -32,7 +31,7 @@ namespace Web.Controllers
         public IActionResult Login([FromBody] CredentialsDtoRequest request)
         {
             var token = _authService.Authenticate(request);
-            return Ok(new { Token = token });
+            return Ok(new { token }); // 🔹 minúscula para frontend
         }
 
         [HttpGet("profile")]

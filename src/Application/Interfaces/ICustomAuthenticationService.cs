@@ -1,10 +1,11 @@
-﻿using Application.Models.Requests;
+﻿using Application.Model;
+using Application.Models.Requests;
 
 namespace Application.Interfaces
 {
     public interface ICustomAuthenticationService
     {
-        string Authenticate(CredentialsDtoRequest credentialsRequest);
-        string AuthenticateAdmin(CredentialsDtoRequest credentialsRequest);
+        AuthResult Authenticate(CredentialsDtoRequest credentialsRequest);
+        AuthResult AuthenticateAdmin(CredentialsDtoRequest credentialsRequest);
     }
 }

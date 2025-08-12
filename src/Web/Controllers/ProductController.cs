@@ -25,86 +25,104 @@ namespace Web.Controllers
             return roleClaim != null && roleClaim.Value == role;
         }
 
+        // ✅ GET ALL PRODUCTS (Visible para todos)
         [HttpGet]
-        [AllowAnonymous] // ← PERMITIR SIN LOGIN PARA QUE FUNCIONE EN EL FRONTEND
+        [AllowAnonymous]
         public IActionResult GetAllProducts()
         {
             var products = _productService.GetAllProducts();
-            return Ok(products);
+            var baseUrl = $"{Request.Scheme}://{Request.Host}/uploads/";
+
+            var updatedProducts = products.Select(p => new
+            {
+                p.Id,
+                Nombre = p.Name,
+                Precio = p.Price,
+                PrecioAnterior = p.OldPrice,
+                Imagen = string.IsNullOrEmpty(p.Image) ? null : baseUrl + p.Image,
+                Descripcion = p.Description,
+                Color = p.Color,
+                Caracteristicas = p.Specs,
+                p.Stock
+            });
+
+            return Ok(updatedProducts);
         }
 
+        // ✅ GET PRODUCT BY NAME (Visible para todos)
         [HttpGet("{name}")]
-       
         [AllowAnonymous]
         public ActionResult<Product> GetByName([FromRoute] string name)
         {
-            // OMITIR validación de roles para pruebas
             var product = _productService.Get(name);
             if (product == null)
                 return NotFound($"Producto con el nombre: {name} no encontrado");
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}/uploads/";
+            product.Image = string.IsNullOrEmpty(product.Image) ? null : baseUrl + product.Image;
+
             return Ok(product);
         }
 
-
+        // ✅ GET PRODUCT BY ID (Solo Admin)
         [HttpGet("{id}")]
-        [AllowAnonymous]
         public IActionResult GetById([FromRoute] int id)
         {
-            if (IsUserInRole("Admin"))
-            {
-                var product = _productService.Get(id);
-                if (product == null)
-                    return NotFound($"Producto con el ID: {id} no encontrado");
-                return Ok(product);
-            }
-            return Forbid();
+            if (!IsUserInRole("Admin"))
+                return Forbid();
+
+            var product = _productService.Get(id);
+            if (product == null)
+                return NotFound($"Producto con el ID: {id} no encontrado");
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}/uploads/";
+            product.Image = string.IsNullOrEmpty(product.Image) ? null : baseUrl + product.Image;
+
+            return Ok(product);
         }
 
+        // ✅ ADD PRODUCT (Solo Admin)
         [HttpPost]
-        [AllowAnonymous]
         public IActionResult AddProduct([FromBody] ProductCreateRequest body)
         {
-            if (IsUserInRole("Admin"))
-            {
-                var newProduct = _productService.AddProduct(body);
-                return CreatedAtAction(nameof(GetById), new { id = newProduct }, $"Producto creado con el ID: {newProduct}");
-            }
-            return Forbid();
+            if (!IsUserInRole("Admin"))
+                return Forbid();
+
+            var newProductId = _productService.AddProduct(body);
+            return CreatedAtAction(nameof(GetById), new { id = newProductId }, $"Producto creado con el ID: {newProductId}");
         }
 
+        // ✅ UPDATE PRODUCT (Solo Admin)
         [HttpPut("{id}")]
-        [AllowAnonymous]
         public ActionResult UpdateProduct([FromRoute] int id, [FromBody] ProductUpdateRequest request)
         {
-            if (IsUserInRole("Admin"))
-            {
-                var existingProduct = _productService.Get(id);
-                if (existingProduct == null)
-                    return NotFound($"Producto con el ID: {id} no encontrado");
+            if (!IsUserInRole("Admin"))
+                return Forbid();
 
-                _productService.UpdateProduct(id, request);
-                return Ok($"Producto con ID: {id} actualizado correctamente");
-            }
-            return Forbid();
+            var existingProduct = _productService.Get(id);
+            if (existingProduct == null)
+                return NotFound($"Producto con el ID: {id} no encontrado");
+
+            _productService.UpdateProduct(id, request);
+            return Ok($"Producto con ID: {id} actualizado correctamente");
         }
 
+        // ✅ DELETE PRODUCT (Solo Admin)
         [HttpDelete("{id}")]
-        [AllowAnonymous]
         public IActionResult DeleteProduct([FromRoute] int id)
         {
-            if (IsUserInRole("Admin"))
+            if (!IsUserInRole("Admin"))
+                return Forbid();
+
+            try
             {
-                try
-                {
-                    _productService.DeleteProduct(id);
-                    return Ok($"Producto con el ID: {id} eliminado correctamente.");
-                }
-                catch
-                {
-                    return BadRequest("Error al eliminar el producto, tiene ventas asociadas");
-                }
+                _productService.DeleteProduct(id);
+                return Ok($"Producto con el ID: {id} eliminado correctamente.");
             }
-            return Forbid();
+            catch
+            {
+                return BadRequest("Error al eliminar el producto, tiene ventas asociadas");
+            }
         }
     }
 }

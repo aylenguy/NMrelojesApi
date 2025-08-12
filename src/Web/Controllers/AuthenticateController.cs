@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Models.Requests;
+using Application.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,18 +21,33 @@ namespace Web.Controllers
             _customAuthenticationService = authenticateService;
         }
 
-        [HttpPost("authenticate")] //usamos POST para enviar los datos para hacer el login
-        public ActionResult<string> Authenticate([FromBody] CredentialsDtoRequest credentials)
+        // 🔹 Login Cliente
+        [HttpPost("authenticate")]
+        public ActionResult<AuthResult> Authenticate([FromBody] CredentialsDtoRequest credentials)
         {
             try
             {
-                // validamos los parámetros que enviamos.
-                string token = _customAuthenticationService.Authenticate(credentials); 
-                return Ok(token);
+                var result = _customAuthenticationService.Authenticate(credentials);
+                return Ok(result); // Siempre devuelve AuthResult { Token, UserType }
             }
             catch (NotAllowedException)
             {
-                return Unauthorized(new { message = "Email o contraseña no válidos.Inténtalo de nuevo" });
+                return Unauthorized(new { message = "Email o contraseña no válidos. Inténtalo de nuevo." });
+            }
+        }
+
+        // 🔹 Login Admin
+        [HttpPost("authenticate-admin")]
+        public ActionResult<AuthResult> AuthenticateAdmin([FromBody] CredentialsDtoRequest credentials)
+        {
+            try
+            {
+                var result = _customAuthenticationService.AuthenticateAdmin(credentials);
+                return Ok(result); // Siempre devuelve AuthResult { Token, UserType }
+            }
+            catch (NotAllowedException)
+            {
+                return Unauthorized(new { message = "Email o contraseña de admin no válidos." });
             }
         }
     }

@@ -1,7 +1,9 @@
 ﻿using Application.Interfaces;
 using Application.Models.Requests;
+using Application.Model;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Domain.Exceptions;
 
 namespace Web.Controllers
 {
@@ -16,18 +18,23 @@ namespace Web.Controllers
             _authService = authService;
         }
 
-        [HttpPost("AdminLogin")]
+        // 🔹 Login Admin
+        [HttpPost("admin-login")]
         [AllowAnonymous]
-        public IActionResult AdminLogin([FromBody] CredentialsDtoRequest request)
+        public ActionResult<AuthResult> AdminLogin([FromBody] CredentialsDtoRequest request)
         {
             try
             {
-                var token = _authService.AuthenticateAdmin(request);
-                return Ok(new { Token = token });
+                var result = _authService.AuthenticateAdmin(request);
+                return Ok(result); // AuthResult { Token, UserType }
+            }
+            catch (NotAllowedException)
+            {
+                return Unauthorized(new { message = "Email o contraseña de admin no válidos." });
             }
             catch (Exception ex)
             {
-                return Unauthorized(ex.Message);
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

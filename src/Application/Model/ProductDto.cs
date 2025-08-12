@@ -3,12 +3,29 @@
     public class ProductDto
     {
         public int Id { get; set; }
-        public string Nombre { get; set; }             // name del producto
-        public decimal Precio { get; set; }            // precio actual
-        public decimal? PrecioAnterior { get; set; }   // precio anterior, opcional
-        public string Imagen { get; set; }             // URL o base64
-        public string Descripcion { get; set; }        // descripción del producto
-        public string Color { get; set; }              // color (opcional)
-        public List<string> Caracteristicas { get; set; } = new(); // lista de características
+
+        // Nombre del producto
+        public string Name { get; set; } = string.Empty;
+
+        // Precio actual
+        public decimal Price { get; set; }
+
+        // Precio anterior (opcional)
+        public decimal? OldPrice { get; set; }
+
+        // Imagen principal (URL o base64)
+        public string Image { get; set; } = string.Empty;
+
+        // Descripción del producto
+        public string Description { get; set; } = string.Empty;
+
+        // Color (opcional)
+        public string? Color { get; set; }
+
+        // Lista de características o especificaciones
+        public List<string> Specs { get; set; } = new();
+
+        // Cantidad en stock
+        public int Stock { get; set; }
     }
 }

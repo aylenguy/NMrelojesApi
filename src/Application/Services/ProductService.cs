@@ -25,13 +25,13 @@ namespace Application.Services
             return _repository.Get().Select(p => new ProductDto
             {
                 Id = p.Id,
-                Nombre = p.Name,
-                Precio = p.Price,
-                PrecioAnterior = p.OldPrice,
-                Imagen = p.Image,
-                Descripcion = p.Description,
+                Name = p.Name,
+                Price = p.Price,
+                OldPrice = p.OldPrice,
+                Image = p.Image,
+                Description = p.Description,
                 Color = p.Color,
-                Caracteristicas = string.IsNullOrEmpty(p.Specs)
+                Specs = string.IsNullOrEmpty(p.Specs)
     ? new List<string>()
     : p.Specs.Split(',').ToList()
 
