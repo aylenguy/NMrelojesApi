@@ -22,7 +22,7 @@ namespace Application.Services
         }
         public List<ProductDto> GetAllProducts()
         {
-            return _repository.Get().Select(p => new ProductDto
+            return _repository.GetAll().Select(p => new ProductDto
             {
                 Id = p.Id,
                 Name = p.Name,
@@ -32,9 +32,10 @@ namespace Application.Services
                 Description = p.Description,
                 Color = p.Color,
                 Specs = string.IsNullOrEmpty(p.Specs)
-    ? new List<string>()
-    : p.Specs.Split(',').ToList()
-
+                    ? new List<string>()
+                    : p.Specs.Split(',').ToList(),
+                Stock = p.Stock, // 🔹 Ahora sí lo devuelve
+                    Brand = p.Brand  // 🔥 Nuevo: mapeo de la marca
             }).ToList();
         }
 
@@ -53,22 +54,23 @@ namespace Application.Services
             return _repository.Get(id);
         }
 
-        public int AddProduct(ProductCreateRequest request)
+        public int AddProduct(ProductCreateRequest request, string imageFileName)
         {
             var product = new Product()
             {
                 Name = request.Name,
                 Price = request.Price,
                 OldPrice = request.OldPrice,
-                Image = request.Image,
+                Image = imageFileName, // ahora sí existe
                 Description = request.Description,
                 Color = request.Color,
                 Specs = string.Join(",", request.Caracteristicas),
-                Stock = request.Stock
+                Stock = request.Stock,
+                Brand = request.Brand
             };
+
             return _repository.Add(product).Id;
         }
-
 
         public void DeleteProduct(int id)
         {
@@ -85,17 +87,35 @@ namespace Application.Services
             var productToUpdate = _repository.Get(id);
             if (productToUpdate != null)
             {
+                // 🔹 Nombre
+                if (!string.IsNullOrWhiteSpace(request.Name))
+                    productToUpdate.Name = request.Name;
+
+                // Campos numéricos
                 productToUpdate.Price = request.Price;
                 productToUpdate.Stock = request.Stock;
                 productToUpdate.OldPrice = request.OldPrice;
-                productToUpdate.Image = request.Image;
-                productToUpdate.Description = request.Description;
-                productToUpdate.Color = request.Color;
-                productToUpdate.Specs = string.Join(",", request.Caracteristicas);
+
+                // Texto
+                if (!string.IsNullOrWhiteSpace(request.Description))
+                    productToUpdate.Description = request.Description;
+
+                if (!string.IsNullOrWhiteSpace(request.Color))
+                    productToUpdate.Color = request.Color;
+
+                if (!string.IsNullOrWhiteSpace(request.Brand))
+                    productToUpdate.Brand = request.Brand;
+
+
+                // Características
+                if (request.Caracteristicas != null && request.Caracteristicas.Any())
+                    productToUpdate.Specs = string.Join(",", request.Caracteristicas);
 
                 _repository.Update(productToUpdate);
             }
         }
+
+
     }
 }
 

@@ -1,18 +1,15 @@
-﻿using Domain.Entities;
+﻿using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Data
-{//Clase genérica, repositorio base, T es como un comodin que nos permite usarlo en todas las entidades. 
-    //Esta clase no existe hasta el momento en que se la llama a traves de otro repositorio. 
-    public class RepositoryBase<T> where T : class
+{
+    // Clase genérica de repositorio base
+    public class RepositoryBase<T> : IRepositoryBase<T> where T : class
     {
-        // Contexto de base de datos de Entity Framework
-        private readonly DbContext _context;
+        private readonly ApplicationContext _context;
+
         public RepositoryBase(ApplicationContext context)
         {
             _context = context;
@@ -49,4 +46,3 @@ namespace Infrastructure.Data
         }
     }
 }
-

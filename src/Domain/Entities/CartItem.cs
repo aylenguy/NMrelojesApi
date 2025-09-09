@@ -10,10 +10,14 @@
         public int ProductId { get; set; }
         public Product Product { get; set; }
 
-        public int Cantidad { get; set; }  // <--- ESTA PROPIEDAD ES NECESARIA
-        public decimal PrecioUnitario { get; set; } // O Price, o UnitPrice, lo que uses
+        // ✅ Renombrado
+        public int Quantity { get; set; }
 
-        // Podrías agregar una propiedad calculada:
-        public decimal Subtotal => Cantidad * PrecioUnitario;
+        // ✅ Guardamos el precio al momento de agregar al carrito
+        public decimal UnitPrice { get; set; }
+
+        // ✅ Subtotal calculado (no persistido)
+        public decimal Subtotal => Quantity * (Product?.Price ?? 0);
+
     }
 }

@@ -1,14 +1,22 @@
-﻿using Domain.Entities;
-using System.Collections.Generic;
+﻿// Domain/Interfaces/IVentaRepository.cs
+using Domain.Entities;
+using Domain.Interfaces;
 
-namespace Application.Interfaces
+public interface IVentaRepository : IRepositoryBase<Venta>
 {
-    public interface IVentaRepository
-    {
-        List<Venta> GetAllByClient(int clientId);
-        Venta? GetById(int id);
-        void Add(Venta venta);
-        void Update(Venta venta);
-        void Delete(Venta venta);
-    }
+    List<Venta> GetAll();
+    List<Venta> GetAllByClient(int clientId);
+
+    // 🔹 Nuevo método para buscar por ExternalReference
+    Task<Venta?> GetByExternalReferenceAsync(string externalReference);
+    Task UpdateAsync(Venta venta);
+
+
+    Venta GetById(int id);
+
+    Task<Venta> GetByIdWithDetailsAsync(int id);
+
+
+
+
 }

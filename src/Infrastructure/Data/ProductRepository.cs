@@ -1,6 +1,7 @@
-﻿using Domain.Entities;
+﻿using Infrastructure.Data;
+using Domain.Entities;
 using Domain.Interfaces;
-using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -28,6 +29,11 @@ namespace Infrastructure.Repositories
             _ctx.SaveChanges();
         }
 
+        public Product? GetById(int id)
+        {
+            return _ctx.Products.SingleOrDefault(p => p.Id == id);
+        }
+
         public Product? Get(int id)
         {
             return _ctx.Products.FirstOrDefault(p => p.Id == id);
@@ -38,7 +44,7 @@ namespace Infrastructure.Repositories
             return _ctx.Products.FirstOrDefault(p => p.Name == name);
         }
 
-        public List<Product> Get()
+        public List<Product> GetAll()
         {
             return _ctx.Products.ToList();
         }
@@ -48,6 +54,20 @@ namespace Infrastructure.Repositories
             _ctx.Products.Update(p);
             _ctx.SaveChanges();
         }
+
+        public async Task<Product?> GetByIdAsync(int id)
+        {
+            return await _ctx.Products.SingleOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task UpdateAsync(Product p)
+        {
+            _ctx.Products.Update(p);
+            await _ctx.SaveChangesAsync();
+        }
+
+
     }
 }
+
 

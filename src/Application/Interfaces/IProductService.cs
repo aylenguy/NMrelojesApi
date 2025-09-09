@@ -13,7 +13,7 @@ namespace Application.Interfaces
 
         Product? GetById(int id);
 
-        int AddProduct(ProductCreateRequest request);
+        int AddProduct(ProductCreateRequest request, string imageFileName);
         void DeleteProduct(int id);
         void UpdateProduct(int id, ProductUpdateRequest request);
     }

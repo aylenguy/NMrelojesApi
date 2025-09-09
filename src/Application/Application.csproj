@@ -5,6 +5,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="MercadoPago" Version="1.0.4477.31589" />
+		<PackageReference Include="mercadopago-sdk" Version="2.9.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.7" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.7" />
 		<PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.0" />

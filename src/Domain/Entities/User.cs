@@ -10,7 +10,8 @@
     // Si es un hash real debería ser byte[], pero lo dejo string si tu implementación es así
     public string PasswordHash { get; set; } = string.Empty;
 
-    // Si guardas la contraseña en texto plano (mala práctica) se queda aquí
-   
+    public string? ResetToken { get; set; }
+    public DateTime? ResetTokenExpira { get; set; }
+
 }
 

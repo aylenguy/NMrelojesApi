@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Services;
 using Domain.Interfaces;
-using Domain.Entities;
+using Application.Model;
 using Infrastructure.Data;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,29 +12,40 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using Infrastructure.Data.Services;
 using Infrastructure.Repositories;
+using Newtonsoft.Json.Serialization; // IMPORTANTE para camelCase
+using MercadoPago;
+using MercadoPago.Config;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configurar Kestrel para HTTPS en localhost
+var mpAccessToken = builder.Configuration["MercadoPago:AccessToken"];
+MercadoPagoConfig.AccessToken = mpAccessToken;
 
-
-// ✅ Controladores y JSON
+// ✅ Controladores y JSON con camelCase
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
-    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-);
-
-// ✅ CORS: permitir TODO
-builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+    options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
 });
 
-// ✅ Swagger con JWT
+// ===================
+// CORS específico para tu front
+// ===================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", builder =>
+    {
+        builder
+            .WithOrigins("https://nm-relojes-app.vercel.app/") // <--- tu front en Vercel
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+// ===================
+// Swagger con JWT
+// ===================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setupAction =>
 {
@@ -42,7 +53,7 @@ builder.Services.AddSwaggerGen(setupAction =>
     {
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
-        Description = "Acá pegar el token generado al loguearse."
+        Description = "Pegar el token generado al loguearse."
     });
 
     setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -61,12 +72,10 @@ builder.Services.AddSwaggerGen(setupAction =>
     });
 });
 
-#region Database
-
-// ✅ Usar cadena de conexión desde appsettings.json
+// ===================
+// BASE DE DATOS
+// ===================
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// Conexión SQLite directa para ejecutar PRAGMA
 var connection = new SqliteConnection(connectionString);
 connection.Open();
 using (var command = connection.CreateCommand())
@@ -76,14 +85,12 @@ using (var command = connection.CreateCommand())
 }
 connection.Close();
 
-// DbContext
 builder.Services.AddDbContext<ApplicationContext>(options =>
     options.UseSqlite(connectionString));
 
-#endregion
-
-#region JWT Authentication
-
+// ===================
+// JWT
+// ===================
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 builder.Services.Configure<AuthenticateService.JwtOptions>(
     builder.Configuration.GetSection("Jwt"));
@@ -103,10 +110,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-#endregion
-
-#region Services
-
+// ===================
+// SERVICES & REPOS
+// ===================
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -115,14 +121,9 @@ builder.Services.AddScoped<IDetalleVentaService, DetalleVentaService>();
 builder.Services.AddScoped<ICustomAuthenticationService, AuthenticateService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<ICartService, CartService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-
-
-
-
-#endregion
-
-#region Repositories
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IPaymentService, PaymentServiceSandbox>();
+builder.Services.AddScoped<IShippingService, ShippingService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
@@ -131,36 +132,55 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IVentaRepository, VentaRepository>();
 builder.Services.AddScoped<IDetalleVentaRepository, DetalleVentaRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-
-
-#endregion
+// ===================
+// EMAIL
+// ===================
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<EmailService>();
 
 var app = builder.Build();
 
-// ✅ Swagger solo en desarrollo
+// ===================
+// Swagger
+// ===================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// ✅ CORS antes de autenticación
-app.UseCors("AllowAll");
+// ✅ CORS antes de auth
+app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();
 
+// ✅ Servir imágenes de /uploads
+var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+Directory.CreateDirectory(uploadsPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+
+// ✅ Autenticación
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// ✅ Migraciones automáticas
+// ✅ Migraciones
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
     db.Database.Migrate();
 }
 
+// Configurar puerto dinámico para Railway
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Urls.Add($"http://*:{port}");
 app.Run();
+

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json.Converters;
-using Domain.Enums;
+
 
 
 namespace Domain.Entities
@@ -22,6 +22,8 @@ namespace Domain.Entities
         public string Description { get; set; } = string.Empty;
         public string Specs { get; set; } = string.Empty;
         public string? Color { get; set; } // ← con "?" se hace opcional (nullable)
+
+        public string? Brand { get; set; }   // 🔥 Nuevo: filtro por marca
 
         public int Stock { get; set; }
     }

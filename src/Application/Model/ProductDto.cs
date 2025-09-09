@@ -27,5 +27,7 @@
 
         // Cantidad en stock
         public int Stock { get; set; }
+
+        public string? Brand { get; set; }
     }
 }

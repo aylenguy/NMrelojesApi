@@ -10,5 +10,7 @@ namespace Domain.Interfaces
         void AddItem(Cart cart, CartItem item);
         void RemoveItem(Cart cart, CartItem item);
         void ClearCart(Cart cart);
+
+        Cart GetByGuestId(string guestId); // 👈 nuevo
     }
 }

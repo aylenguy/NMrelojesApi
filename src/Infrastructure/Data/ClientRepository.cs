@@ -28,6 +28,13 @@ namespace Infrastructure.Data
             _context.Users.Add(client);
             _context.SaveChanges();
         }
+
+        public void Update(User client)
+        {
+            _context.Users.Update(client);
+            _context.SaveChanges(); // 🔹 Esto asegura que se guarden los cambios
+        }
+
     }
 }
 

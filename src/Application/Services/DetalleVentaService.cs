@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
-using Application.Models; // Para DetalleVentaDto
-using Application.Models.Requests; // Para DetalleVentaUpdateRequest
+using Application.Model;
+using Application.Models;
+using Application.Models.Requests;
 using Domain.Entities;
 using Domain.Interfaces;
 using System;
@@ -12,16 +13,13 @@ namespace Application.Services
     {
         private readonly IDetalleVentaRepository _detalleVentaRepository;
         private readonly IProductRepository _productRepository;
-        private readonly IVentaRepository _ventaRepository;
 
         public DetalleVentaService(
             IDetalleVentaRepository detalleVentaRepository,
-            IProductRepository productRepository,
-            IVentaRepository ventaRepository)
+            IProductRepository productRepository)
         {
             _detalleVentaRepository = detalleVentaRepository;
             _productRepository = productRepository;
-            _ventaRepository = ventaRepository;
         }
 
         public List<DetalleVenta> GetAllByClient(int clientId)
@@ -34,14 +32,11 @@ namespace Application.Services
             => _detalleVentaRepository.GetAllByVenta(ventaId);
 
         public DetalleVenta? GetById(int id)
-            => _detalleVentaRepository.GetById(id);
+            => _detalleVentaRepository.Get(id);
 
         public int AddDetalleVenta(DetalleVentaDto dto)
         {
-            var venta = _ventaRepository.GetById(dto.VentaId)
-                ?? throw new Exception("La venta no existe");
-
-            var producto = _productRepository.Get(dto.ProductId)
+            var producto = _productRepository.GetById(dto.ProductoId)
                 ?? throw new Exception("El producto no existe");
 
             if (producto.Stock < dto.Cantidad)
@@ -53,24 +48,48 @@ namespace Application.Services
             var detalle = new DetalleVenta
             {
                 VentaId = dto.VentaId,
-                ProductId = dto.ProductId,
-                Cantidad = dto.Cantidad,
-                PrecioUnitario = producto.Price
+                ProductId = dto.ProductoId,
+                Quantity = dto.Cantidad,
+                UnitPrice = producto.Price,
+                Subtotal = producto.Price * dto.Cantidad
             };
 
-            return _detalleVentaRepository.Add(detalle);
+            var saved = _detalleVentaRepository.Add(detalle);
+            return saved.Id; // ✅ devolvemos el Id
         }
 
+
+
         public void DeleteDetalleVenta(int id)
-            => _detalleVentaRepository.Delete(id);
+        {
+            var detalle = _detalleVentaRepository.Get(id)
+                ?? throw new Exception("DetalleVenta no encontrado");
+
+            _detalleVentaRepository.Delete(detalle); // ✅ Delete espera la entidad, no Id
+        }
 
         public void UpdateDetalleVenta(int id, DetalleVentaUpdateRequest request)
         {
-            var detalle = _detalleVentaRepository.GetById(id)
+            var detalle = _detalleVentaRepository.Get(id)
                 ?? throw new Exception("Detalle de venta no encontrado");
 
-            detalle.Cantidad = request.Amount;
+            var producto = _productRepository.GetById(detalle.ProductId)
+                ?? throw new Exception("Producto no encontrado");
+
+            if (producto.Stock + detalle.Quantity < request.Cantidad)
+                throw new Exception("Stock insuficiente para actualizar la cantidad.");
+
+            // Reajustar stock (devolvemos lo viejo y descontamos lo nuevo)
+            producto.Stock += detalle.Quantity;
+            producto.Stock -= request.Cantidad;
+            _productRepository.Update(producto);
+
+            detalle.Quantity = request.Cantidad;
+            detalle.UnitPrice = producto.Price; // ✅ Reasegurar precio
+            detalle.Subtotal = producto.Price * request.Cantidad;
+
             _detalleVentaRepository.Update(detalle);
         }
     }
 }
+

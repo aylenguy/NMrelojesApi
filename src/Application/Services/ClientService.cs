@@ -8,23 +8,22 @@ namespace Application.Services
     public class ClientService : IClientService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IPasswordService _passwordService;  // <-- inyectar
+        private readonly IPasswordService _passwordService;
 
         public ClientService(IUserRepository userRepository, IPasswordService passwordService)
         {
             _userRepository = userRepository;
-            _passwordService = passwordService;  // <-- asignar
+            _passwordService = passwordService;
         }
 
         public int RegisterClient(ClientRegisterRequest request)
         {
             if (_userRepository.GetUserByEmail(request.Email) != null)
-                throw new Exception("El email ya está registrado");
+                throw new InvalidOperationException("El email ya está registrado");
 
-            // Usar PasswordService para hashear la contraseña
             var hashedPassword = _passwordService.HashPassword(request.Password);
 
-            var client = new User
+            var client = new Client
             {
                 Email = request.Email,
                 UserName = request.UserName,
@@ -36,6 +35,26 @@ namespace Application.Services
 
             _userRepository.Add(client);
             return client.Id;
+        }
+
+        // 🔹 Buscar cliente por email
+        public Client? GetByEmail(string email)
+        {
+            return _userRepository.GetUserByEmail(email) as Client;
+        }
+
+        // 🔹 Buscar cliente por token de reseteo
+        public Client? GetByToken(string token)
+        {
+            return _userRepository.GetAll()
+                .OfType<Client>()
+                .FirstOrDefault(c => c.ResetToken == token);
+        }
+
+        // 🔹 Actualizar cliente (guardar cambios)
+        public void Update(Client client)
+        {
+            _userRepository.Update(client);
         }
     }
 }

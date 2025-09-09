@@ -6,5 +6,7 @@ namespace Domain.Interfaces
     {
         User? GetClientByEmail(string email);
         void Add(User client);
+
+        void Update(User client); // 🔹 Nuevo método
     }
 }

@@ -7,12 +7,11 @@ namespace Application.Interfaces
 {
     public interface IDetalleVentaService
     {
-        List<DetalleVenta> GetAllByClient(int clientId);
-        List<DetalleVenta> GetAllByProduct(int productId);
-        List<DetalleVenta> GetAllByVenta(int orderId);
+        List<DetalleVenta> GetAllByVenta(int ventaId);
         DetalleVenta? GetById(int id);
+
         int AddDetalleVenta(DetalleVentaDto dto);
-        void DeleteDetalleVenta(int id);
         void UpdateDetalleVenta(int id, DetalleVentaUpdateRequest request);
+        void DeleteDetalleVenta(int id);
     }
 }

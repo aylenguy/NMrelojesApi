@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -24,6 +24,7 @@ namespace Infrastructure.Migrations
                     Description = table.Column<string>(type: "TEXT", nullable: false),
                     Specs = table.Column<string>(type: "TEXT", nullable: false),
                     Color = table.Column<string>(type: "TEXT", nullable: true),
+                    Brand = table.Column<string>(type: "TEXT", nullable: true),
                     Stock = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -43,6 +44,8 @@ namespace Infrastructure.Migrations
                     Name = table.Column<string>(type: "TEXT", nullable: true),
                     LastName = table.Column<string>(type: "TEXT", nullable: true),
                     PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
+                    ResetToken = table.Column<string>(type: "TEXT", nullable: true),
+                    ResetTokenExpira = table.Column<DateTime>(type: "TEXT", nullable: true),
                     PhoneNumber = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
@@ -56,7 +59,8 @@ namespace Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    ClientId = table.Column<int>(type: "INTEGER", nullable: false)
+                    ClientId = table.Column<int>(type: "INTEGER", nullable: true),
+                    GuestId = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -65,8 +69,7 @@ namespace Infrastructure.Migrations
                         name: "FK_Carts_Users_ClientId",
                         column: x => x.ClientId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -75,9 +78,31 @@ namespace Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    ClientId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Fecha = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Total = table.Column<decimal>(type: "TEXT", nullable: false)
+                    ClientId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CustomerEmail = table.Column<string>(type: "TEXT", nullable: false),
+                    CustomerName = table.Column<string>(type: "TEXT", nullable: false),
+                    CustomerLastname = table.Column<string>(type: "TEXT", nullable: false),
+                    ExternalReference = table.Column<string>(type: "TEXT", nullable: false),
+                    StatusDetail = table.Column<string>(type: "TEXT", nullable: false),
+                    PaymentId = table.Column<string>(type: "TEXT", nullable: false),
+                    TransactionAmount = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Street = table.Column<string>(type: "TEXT", nullable: false),
+                    Number = table.Column<string>(type: "TEXT", nullable: false),
+                    Department = table.Column<string>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    City = table.Column<string>(type: "TEXT", nullable: false),
+                    Province = table.Column<string>(type: "TEXT", nullable: false),
+                    PostalCode = table.Column<string>(type: "TEXT", nullable: false),
+                    PaymentStatus = table.Column<string>(type: "TEXT", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    ShippingMethod = table.Column<string>(type: "TEXT", nullable: false),
+                    ShippingAddress = table.Column<string>(type: "TEXT", nullable: false),
+                    ShippingCost = table.Column<decimal>(type: "TEXT", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "TEXT", nullable: false),
+                    DeliveryMethod = table.Column<string>(type: "TEXT", nullable: false),
+                    Date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Total = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -98,8 +123,8 @@ namespace Infrastructure.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     CartId = table.Column<int>(type: "INTEGER", nullable: false),
                     ProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Cantidad = table.Column<int>(type: "INTEGER", nullable: false),
-                    PrecioUnitario = table.Column<decimal>(type: "TEXT", nullable: false)
+                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -126,8 +151,8 @@ namespace Infrastructure.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     VentaId = table.Column<int>(type: "INTEGER", nullable: false),
                     ProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Cantidad = table.Column<int>(type: "INTEGER", nullable: false),
-                    PrecioUnitario = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Quantity = table.Column<int>(type: "INTEGER", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "TEXT", nullable: false),
                     Subtotal = table.Column<decimal>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
@@ -149,13 +174,13 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "Products",
-                columns: new[] { "Id", "Color", "Description", "Image", "Name", "OldPrice", "Price", "Specs", "Stock" },
-                values: new object[] { 1, "Negro", "Reloj deportivo resistente al agua, ideal para actividades al aire libre.", "reloj-deportivo.jpg", "Reloj Deportivo", 120000m, 105000m, "Cronómetro, GPS, sumergible hasta 50m", 15 });
+                columns: new[] { "Id", "Brand", "Color", "Description", "Image", "Name", "OldPrice", "Price", "Specs", "Stock" },
+                values: new object[] { 1, "Kosiuko", "Negro", "Reloj deportivo resistente al agua, ideal para actividades al aire libre.", "relojhombre.jpg", "Reloj Deportivo", 120000m, 105000m, "Cronómetro, GPS, sumergible hasta 50m", 15 });
 
             migrationBuilder.InsertData(
                 table: "Users",
-                columns: new[] { "Id", "Email", "LastName", "Name", "PasswordHash", "UserName", "UserType" },
-                values: new object[] { 1, "aylenguy@gmail.com", "Guy", "Aylen", "$2a$11$mRzpoOlmiTtoNqA0tQmbmuCvQNdlS0YGvwL8LCg4pfGFKLowIjX3q", "aylen", "Admin" });
+                columns: new[] { "Id", "Email", "LastName", "Name", "PasswordHash", "ResetToken", "ResetTokenExpira", "UserName", "UserType" },
+                values: new object[] { 1, "aylenguy@gmail.com", "Guy", "Aylen", "$2a$11$/Q98DFfyOZlpeJjmBvNITuxkOoV/PKEEFoYJ8nap1O5VLiGsQq3nu", null, null, "aylen", "Admin" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_CartItems_CartId",

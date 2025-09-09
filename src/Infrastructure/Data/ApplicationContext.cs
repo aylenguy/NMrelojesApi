@@ -25,7 +25,6 @@ namespace Infrastructure.Data
         }
 
         //--- Fluent API ---
-        // Se usa para configurar cómo se mapearán las entidades a tablas y establecer relaciones, constraints y datos iniciales.
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Configuración para herencia en Users
@@ -42,7 +41,7 @@ namespace Infrastructure.Data
                 Name = "Aylen",
                 LastName = "Guy",
                 UserName = "aylen",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123"),
+                PasswordHash = "$2a$11$/Q98DFfyOZlpeJjmBvNITuxkOoV/PKEEFoYJ8nap1O5VLiGsQq3nu",
                 UserType = "Admin"
             });
 
@@ -55,9 +54,10 @@ namespace Infrastructure.Data
                     Price = 105000,
                     OldPrice = 120000,
                     Stock = 15,
-                    Image = "reloj-deportivo.jpg",
+                    Image = "relojhombre.jpg", // <- cambiamos aquí
                     Description = "Reloj deportivo resistente al agua, ideal para actividades al aire libre.",
                     Color = "Negro",
+                    Brand = "Kosiuko",
                     Specs = "Cronómetro, GPS, sumergible hasta 50m"
                 }
             );
@@ -76,12 +76,25 @@ namespace Infrastructure.Data
                 .HasForeignKey(l => l.VentaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // DetalleVenta -> Product (N:1) con restricción para no borrar producto si hay ventas
-            modelBuilder.Entity<DetalleVenta>()
-                .HasOne(d => d.Product)
-                .WithMany()
-                .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // ✅ Configuración de DetalleVenta
+            modelBuilder.Entity<DetalleVenta>(entity =>
+            {
+                entity.HasKey(d => d.Id);
+
+                // 👇 Esto fuerza autoincrement
+                entity.Property(d => d.Id)
+                      .ValueGeneratedOnAdd();
+
+                entity.HasOne(d => d.Venta)
+                      .WithMany(v => v.DetalleVentas)
+                      .HasForeignKey(d => d.VentaId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(d => d.Product)
+                      .WithMany()
+                      .HasForeignKey(d => d.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // Relación Cart -> CartItems (1:N)
             modelBuilder.Entity<Cart>()
@@ -92,13 +105,12 @@ namespace Infrastructure.Data
 
             // CartItem -> Product (N:1) con restricción
             modelBuilder.Entity<CartItem>()
-                .HasOne(ci => ci.Product)
-                .WithMany()
-                .HasForeignKey(ci => ci.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
+    .HasOne(ci => ci.Product)
+    .WithMany()
+    .HasForeignKey(ci => ci.ProductId)
+    .OnDelete(DeleteBehavior.Cascade);
 
             base.OnModelCreating(modelBuilder);
         }
     }
 }
-

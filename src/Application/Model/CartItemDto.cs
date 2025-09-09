@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Application.Model
+﻿
+public class CartItemDto
 {
-    public class CartItemDto
-    {
-        public int ProductId { get; set; }
-        public string ProductName { get; set; }
-        public decimal UnitPrice { get; set; }
-        public int Quantity { get; set; }
-        public decimal Subtotal => UnitPrice * Quantity;
-    }
+    public int Id { get; set; }
+    public int ProductId { get; set; }
+    public string ProductName { get; set; }
+    public int Quantity { get; set; }   // ✅ unificado
+    public decimal UnitPrice { get; set; } // ✅ renombrado de Price
+
+    public string Brand { get; set; }  // <-- nuevo
+    public string ImageUrl { get; set; }
+
+    public decimal Subtotal => Quantity * UnitPrice;
 }

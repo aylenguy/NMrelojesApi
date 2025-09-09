@@ -9,9 +9,7 @@ namespace Application.Models.Requests
 {
     public class DetalleVentaUpdateRequest
     {
-        [Required]
-        public int Amount { get; set; }
-        [Required]
-        public int ProductId { get; set; }
+        // Solo permitimos actualizar la cantidad del producto
+        public int Cantidad { get; set; }
     }
 }

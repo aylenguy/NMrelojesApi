@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Enums
+namespace Application.Model
 {
-    internal class Stock
-
+    public class UpdateUserRoleDto
     {
+        public string UserType { get; set; } = string.Empty;
     }
 }

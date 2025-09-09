@@ -1,14 +1,18 @@
 ﻿using Domain.Entities;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Domain.Interfaces
+namespace Application.Interfaces
 {
-    public interface IUserRepository : IRepositoryBase<User>
+    public interface IUserRepository
     {
-        User? GetUserByEmail(string email);
+        IEnumerable<User> GetAll();
+        User? GetById(int id);
+        User? GetByName(string name);
+        User? GetUserByEmail(string email); // <-- Agregar esta línea
+        void Add(User user);
+        void Update(User user);
+        void Delete(User user);
+
+        void SaveChanges();
     }
 }

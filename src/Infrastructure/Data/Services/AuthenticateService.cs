@@ -37,17 +37,19 @@ namespace Infrastructure.Services
         }
 
         // 🔹 Generar token JWT con rol y datos opcionales
-        private string GenerateToken(string id, string email, string? username, string role)
+        private string GenerateToken(string id, string email, string? username, string name, string lastName, string role)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, id),
-                new Claim(JwtRegisteredClaimNames.Email, email),
-                new Claim(ClaimTypes.Role, role)
-            };
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, id),
+        new Claim(JwtRegisteredClaimNames.Email, email),
+        new Claim(ClaimTypes.Role, role),
+        new Claim("name", name),
+        new Claim("lastName", lastName)
+    };
 
             if (!string.IsNullOrEmpty(username))
                 claims.Add(new Claim("username", username));
@@ -63,19 +65,52 @@ namespace Infrastructure.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+
         // 🔹 Login Cliente
         public AuthResult Authenticate(CredentialsDtoRequest credentialsRequest)
         {
-            var user = ValidateUser(credentialsRequest);
-            if (user == null)
-                throw new NotAllowedException("Usuario o contraseña incorrectos");
+            // 1. Validar email vacío
+            if (string.IsNullOrEmpty(credentialsRequest.Email))
+            {
+                return new AuthResult { Error = "email_required" };
+            }
 
+            // 2. Validar formato de email
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    credentialsRequest.Email,
+                    @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            {
+                return new AuthResult { Error = "invalid_email" };
+            }
+
+            // 3. Validar contraseña vacía
+            if (string.IsNullOrEmpty(credentialsRequest.Password))
+            {
+                return new AuthResult { Error = "password_required" };
+            }
+
+            // 4. Buscar usuario
+            var user = _userRepository.GetUserByEmail(credentialsRequest.Email);
+            if (user == null)
+            {
+                return new AuthResult { Error = "user_not_found" };
+            }
+
+            // 5. Verificar contraseña
+            if (!_passwordService.VerifyPassword(credentialsRequest.Password, user.PasswordHash))
+            {
+                return new AuthResult { Error = "wrong_password" };
+            }
+
+            // 6. Todo bien → generar token
             var token = GenerateToken(
-                user.Id.ToString(),
-                user.Email,
-                user.UserName,
-                "Client"
-            );
+     user.Id.ToString(),
+     user.Email,
+     user.UserName,
+     user.Name,
+     user.LastName,
+     "Client"
+ );
 
             return new AuthResult
             {
@@ -83,6 +118,8 @@ namespace Infrastructure.Services
                 UserType = "Client"
             };
         }
+
+
 
         private User? ValidateUser(CredentialsDtoRequest credentialsRequest)
         {
@@ -112,11 +149,13 @@ namespace Infrastructure.Services
                 throw new NotAllowedException("Credenciales inválidas");
 
             var token = GenerateToken(
-                admin.Id.ToString(),
-                admin.Email,
-                admin.UserName,
-                "Admin"
-            );
+     admin.Id.ToString(),
+     admin.Email,
+     admin.UserName,
+     admin.UserName, // lo usamos como "name"
+     "",             // sin apellido
+     "Admin"
+ );
 
             return new AuthResult
             {
