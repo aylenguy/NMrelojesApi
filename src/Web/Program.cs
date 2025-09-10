@@ -37,7 +37,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsPolicy", builder =>
     {
         builder
-            .WithOrigins("https://nm-relojes-app.vercel.app/") // <--- tu front en Vercel
+            .WithOrigins("https://nm-relojes-app.vercel.app") // <--- tu front en Vercel
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -180,7 +180,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configurar puerto dinámico para Railway
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-app.Urls.Add($"http://*:{port}");
+//var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+//app.Urls.Add($"http://*:{port}");
 app.Run();
 
