@@ -18,11 +18,15 @@ using MercadoPago.Config;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar Kestrel para HTTPS en localhost
+// ===================
+// Configuración MercadoPago
+// ===================
 var mpAccessToken = builder.Configuration["MercadoPago:AccessToken"];
 MercadoPagoConfig.AccessToken = mpAccessToken;
 
-// ✅ Controladores y JSON con camelCase
+// ===================
+// Controladores y JSON camelCase
+// ===================
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
@@ -34,10 +38,10 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 // ===================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", builder =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
-        builder
-            .WithOrigins("https://nm-relojes-app.vercel.app") // <--- tu front en Vercel
+        policy
+            .WithOrigins("https://nm-relojes-2yjutova1-aylens-projects-7a096c01.vercel.app") // <--- tu front en Vercel
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -92,8 +96,7 @@ builder.Services.AddDbContext<ApplicationContext>(options =>
 // JWT
 // ===================
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-builder.Services.Configure<AuthenticateService.JwtOptions>(
-    builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<AuthenticateService.JwtOptions>(jwtSettings);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -151,12 +154,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// ===================
 // ✅ CORS antes de auth
+// ===================
 app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();
 
-// ✅ Servir imágenes de /uploads
+// ===================
+// Servir imágenes de /uploads
+// ===================
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
 Directory.CreateDirectory(uploadsPath);
 
@@ -166,21 +173,30 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads"
 });
 
-// ✅ Autenticación
+// ===================
+// Autenticación y autorización
+// ===================
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ===================
+// Mapear controladores
+// ===================
 app.MapControllers();
 
-// ✅ Migraciones
+// ===================
+// Migraciones automáticas
+// ===================
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
     db.Database.Migrate();
 }
 
-// Configurar puerto dinámico para Railway
+// ===================
+// Configurar puerto dinámico (para Railway/Render)
+// ===================
 //var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 //app.Urls.Add($"http://*:{port}");
-app.Run();
 
+app.Run();
