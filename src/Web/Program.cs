@@ -41,7 +41,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsPolicy", policy =>
     {
         policy
-            .WithOrigins("https://nm-relojes-2yjutova1-aylens-projects-7a096c01.vercel.app") // <--- tu front en Vercel
+            .WithOrigins(
+                "https://nm-relojes-8v5n30p7j-aylens-projects-7a096c01.vercel.app", // ✅ Front en Vercel
+                "http://localhost:5173" // ✅ Para desarrollo local
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -196,7 +199,7 @@ using (var scope = app.Services.CreateScope())
 // ===================
 // Configurar puerto dinámico (para Railway/Render)
 // ===================
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-app.Urls.Add($"http://*:{port}");
+// var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+// app.Urls.Add($"http://*:{port}");
 
 app.Run();
