@@ -42,9 +42,9 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(
-                "https://nm-relojes-7nxabs53x-aylens-projects-7a096c01.vercel.app", // ✅ Front en Vercel
+                "https://nm-relojes-hau16q5mn-aylens-projects-7a096c01.vercel.app", // ✅ Front en Vercel
                 "http://localhost:5173" // ✅ Para desarrollo local
-
+        
 
 
 
