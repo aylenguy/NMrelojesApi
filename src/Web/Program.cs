@@ -41,23 +41,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsPolicy", policy =>
     {
         policy
-            .WithOrigins(
-                "https://nm-relojes-iryqstrfw-aylens-projects-7a096c01.vercel.app", // ✅ Front en Vercel
-                "http://localhost:5173" // ✅ Para desarrollo local
-
-
-
-
-
-
-
-
-
-            )
+            .SetIsOriginAllowed(origin => origin.EndsWith(".vercel.app")) // ✅ cualquier deploy de Vercel
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
+
 
 // ===================
 // Swagger con JWT
