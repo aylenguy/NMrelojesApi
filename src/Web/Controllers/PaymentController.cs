@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
 using Application.Interfaces;
 using Application.Model.Request;
 using Application.Model;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Web.Controllers
 {
@@ -37,7 +37,6 @@ namespace Web.Controllers
             _productRepository = productRepository;
         }
 
-        // 🔹 Crear pago directo
         [HttpPost("create-payment")]
         public async Task<IActionResult> CreatePayment([FromBody] PaymentRequestDto dto)
         {
@@ -45,14 +44,12 @@ namespace Web.Controllers
             return Ok(paymentResult);
         }
 
-        // 🔹 Crear preferencia de checkout
         [HttpPost("create-checkout")]
         public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequestDto dto)
         {
             try
             {
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
-
                 if (preference == null)
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
@@ -65,7 +62,7 @@ namespace Web.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpPost("webhook")]
         public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
         {
             if (notification.ValueKind == JsonValueKind.Undefined || notification.ValueKind == JsonValueKind.Null)
@@ -73,54 +70,54 @@ namespace Web.Controllers
 
             try
             {
-                // Solo ejecutar el Webhook real si no estamos en modo Swagger
-                if (!HttpContext.Request.Headers.ContainsKey("User-Agent") ||
-                    !HttpContext.Request.Headers["User-Agent"].ToString().Contains("Swagger"))
-                {
-                    _logger.LogInformation("Webhook recibido: {Notification}", notification.ToString());
+                _logger.LogInformation("Webhook recibido: {Notification}", notification.ToString());
 
-                    if (!notification.TryGetProperty("type", out var typeProp) ||
-                        !notification.TryGetProperty("data", out var dataProp) ||
-                        !dataProp.TryGetProperty("id", out var idProp))
+                if (!notification.TryGetProperty("type", out var typeProp) ||
+                    !notification.TryGetProperty("data", out var dataProp) ||
+                    !dataProp.TryGetProperty("id", out var idProp))
+                {
+                    _logger.LogWarning("Notificación inválida: {Notification}", notification.ToString());
+                    return BadRequest();
+                }
+
+                var type = typeProp.GetString();
+                var id = idProp.GetString();
+
+                if (type == "payment" && !string.IsNullOrEmpty(id))
+                {
+                    var httpClient = _httpClientFactory.CreateClient();
+                    var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.mercadopago.com/v1/payments/{id}");
+                    request.Headers.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
+
+                    var response = await httpClient.SendAsync(request);
+                    var json = await response.Content.ReadAsStringAsync();
+                    var paymentInfo = JsonSerializer.Deserialize<MercadoPagoPaymentDto>(json);
+
+                    if (paymentInfo == null)
                     {
-                        _logger.LogWarning("Notificación inválida: {Notification}", notification.ToString());
+                        _logger.LogWarning("No se pudo deserializar paymentInfo");
                         return BadRequest();
                     }
 
-                    var type = typeProp.GetString();
-                    var id = idProp.GetString();
+                    var venta = await _ventaRepository.GetByExternalReferenceAsync(paymentInfo.ExternalReference);
 
-                    if (type == "payment" && !string.IsNullOrEmpty(id))
+                    if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
                     {
-                        // 🔹 Todo tu código de pago seguro
-                        var httpClient = _httpClientFactory.CreateClient();
-                        var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.mercadopago.com/v1/payments/{id}");
-                        request.Headers.Authorization =
-                            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
-
-                        var response = await httpClient.SendAsync(request);
-                        var json = await response.Content.ReadAsStringAsync();
-
-                        var paymentInfo = JsonSerializer.Deserialize<MercadoPagoPaymentDto>(json);
-
-                        if (paymentInfo == null) return BadRequest();
-
-                        var venta = await _ventaRepository.GetByExternalReferenceAsync(paymentInfo.ExternalReference);
-                        if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
+                        venta.Status = VentaStatus.Enviado; // ✅ Usar tu estado existente
+                        foreach (var detalle in venta.DetalleVentas)
                         {
-                            venta.Status = VentaStatus.Enviado;
-                            foreach (var detalle in venta.DetalleVentas)
+                            var product = await _productRepository.GetByIdAsync(detalle.ProductId);
+                            if (product != null)
                             {
-                                var product = await _productRepository.GetByIdAsync(detalle.ProductId);
-                                if (product != null)
-                                {
-                                    product.Stock -= detalle.Quantity;
-                                    await _productRepository.UpdateAsync(product);
-                                }
+                                product.Stock -= detalle.Quantity;
+                                await _productRepository.UpdateAsync(product);
                             }
-                            await _ventaRepository.UpdateAsync(venta);
                         }
+                        await _ventaRepository.UpdateAsync(venta);
+                        _logger.LogInformation("Venta actualizada a Enviado: {VentaId}", venta.Id);
                     }
+
                 }
 
                 return Ok();
@@ -131,8 +128,5 @@ namespace Web.Controllers
                 return StatusCode(500);
             }
         }
-
-
-
     }
 }

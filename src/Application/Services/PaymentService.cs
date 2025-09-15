@@ -44,7 +44,7 @@ public class PaymentServiceSandbox : IPaymentService
                     Pending = dto.BackUrls?.Pending ?? "https://localhost:5173/checkout/pending"
                 },
 
-                AutoReturn = null, // No confiar en AutoReturn para actualizar stock/venta
+                AutoReturn = null, // No confiar en AutoReturn
 
                 ExternalReference = dto.ExternalReference,
                 NotificationUrl = dto.NotificationUrl ?? "https://427eeb99434f.ngrok-free.app/api/Payment/webhook"
