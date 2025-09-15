@@ -166,6 +166,8 @@ namespace Web.Controllers
             var ventas = _ventaService.GetAll() ?? new List<VentaResponseDto>();
             return Ok(ventas);
         }
+
+
         [HttpPost]
         public async Task<IActionResult> CreateFromCart([FromBody] VentaDto dto)
         {
