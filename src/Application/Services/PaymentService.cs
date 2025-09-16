@@ -11,10 +11,12 @@ using System.Threading.Tasks;
 public class PaymentServiceSandbox : IPaymentService
 {
     private readonly string _accessToken;
+    private readonly IConfiguration _configuration; // 👈 faltaba esto
 
     public PaymentServiceSandbox(IConfiguration configuration)
     {
-        _accessToken = configuration["MercadoPago:AccessToken"];
+        _configuration = configuration; // 👈 guardamos la referencia
+        _accessToken = _configuration["MercadoPago:AccessToken"];
         MercadoPagoConfig.AccessToken = _accessToken;
     }
 
@@ -39,15 +41,16 @@ public class PaymentServiceSandbox : IPaymentService
 
                 BackUrls = new PreferenceBackUrlsRequest
                 {
-                    Success = dto.BackUrls?.Success ?? "https://localhost:5173/checkout/success",
-                    Failure = dto.BackUrls?.Failure ?? "https://localhost:5173/checkout/failure",
-                    Pending = dto.BackUrls?.Pending ?? "https://localhost:5173/checkout/pending"
+                    Success = dto.BackUrls?.Success ?? _configuration["FrontEndUrls:Success"],
+                    Failure = dto.BackUrls?.Failure ?? _configuration["FrontEndUrls:Failure"],
+                    Pending = dto.BackUrls?.Pending ?? _configuration["FrontEndUrls:Pending"]
                 },
 
-                AutoReturn = null, // No confiar en AutoReturn
+                AutoReturn = "approved", // 👈 para que vuelva solo al success si se aprueba
 
                 ExternalReference = dto.ExternalReference,
-                NotificationUrl = dto.NotificationUrl ?? "https://427eeb99434f.ngrok-free.app/api/Payment/webhook"
+                NotificationUrl = dto.NotificationUrl
+                    ?? _configuration["BackEndUrls:NotificationUrl"] // 🔹 mejor desde config también
             };
 
             var client = new PreferenceClient();
