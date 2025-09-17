@@ -31,8 +31,26 @@ namespace Application.Services
         }
 
         // 🔹 Entidad → DTO
+        // 🔹 Entidad → DTO con descuento por método de pago
         private VentaResponseDto MapToDto(Venta v)
         {
+            // 🔹 Calcular subtotal sumando todos los items
+            decimal subtotal = v.DetalleVentas?.Sum(d => d.Subtotal) ?? 0;
+
+            // 🔹 Calcular descuento según método de pago
+            decimal paymentDiscount = 0;
+            if (!string.IsNullOrEmpty(v.PaymentMethod))
+            {
+                var metodo = v.PaymentMethod.ToLower();
+                if (metodo == "efectivo" || metodo == "transferencia")
+                {
+                    paymentDiscount = 0.2m * subtotal; // 20% de descuento
+                }
+            }
+
+            // 🔹 Total final con descuento incluido
+            decimal totalConDescuento = v.Total - paymentDiscount;
+
             return new VentaResponseDto
             {
                 OrderId = v.Id,
@@ -53,7 +71,9 @@ namespace Application.Services
                 Notes = v.Notes,
                 Date = v.Date,
                 Status = v.Status.ToString(),
-                Total = v.Total,
+                Total = v.Total, // total original (sin descuento)
+                PaymentDiscount = paymentDiscount,
+                TotalConDescuento = totalConDescuento,
                 ExternalReference = v.ExternalReference ?? string.Empty,
                 Items = v.DetalleVentas.Select(d => new VentaItemDto
                 {
@@ -65,7 +85,6 @@ namespace Application.Services
                 }).ToList()
             };
         }
-
         public List<VentaResponseDto> GetAll()
         {
             var ventas = _ventaRepository.GetAll() ?? new List<Venta>();

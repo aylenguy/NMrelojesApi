@@ -23,6 +23,9 @@ public class VentaResponseDto
     public string PaymentMethod { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
 
+    public decimal PaymentDiscount { get; set; }
+    public decimal TotalConDescuento { get; set; }
+
     // Venta
     public DateTime Date { get; set; }
     public string Status { get; set; } = string.Empty;
