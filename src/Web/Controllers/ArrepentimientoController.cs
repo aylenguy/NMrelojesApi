@@ -31,6 +31,6 @@ public class ArrepentimientoRequest
     public string Nombre { get; set; }
     public string Telefono { get; set; }
     public string Email { get; set; }
-    public string CodigoCompra { get; set; }
+  
     public string Inconveniente { get; set; }
 }
