@@ -116,55 +116,69 @@ public class EmailService
             tablaProductos += $"<tr><td colspan='2' style='text-align:right; font-weight:bold;'>Total:</td><td style='text-align:right; font-weight:bold;'>${total:F2}</td></tr>";
             tablaProductos += "</table>";
 
-            // Cuerpo del correo HTML
+            // Cuerpo del correo HTML con cid para el logo
             string body = $@"
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <style>
-                body {{ font-family: Arial, sans-serif; background-color: #f5f5f5; margin:0; padding:0; }}
-                .container {{ max-width:600px; margin:20px auto; background:white; border-radius:12px; overflow:hidden; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
-                .header {{ background:#000; padding:20px; text-align:center; }}
-                .header img {{ max-height:60px; }}
-                h2 {{ color:#333; }}
-                p {{ color:#555; line-height:1.5; }}
-                .btn {{ display:inline-block; margin-top:20px; padding:12px 24px; background:#000; color:#fff !important; text-decoration:none; border-radius:8px; font-weight:bold; }}
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <img src='https://tusitio.com/logo.png' alt='NM Relojes'>
-                </div>
-                <div class='content'>
-                    <h2>¡Gracias por tu compra!</h2>
-                    <p>Tu pedido <b>#{numeroPedido}</b> ha sido recibido y estamos procesándolo.</p>
-                    {tablaProductos}
-                    <p>Pronto recibirás más información sobre el envío.</p>
-                    <a href='https://nmrelojes.com' class='btn'>Ir a la tienda</a>
-                </div>
-            </div>
-        </body>
-        </html>";
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; background-color: #f5f5f5; margin:0; padding:0; }}
+        .container {{ max-width:600px; margin:20px auto; background:white; border-radius:12px; overflow:hidden; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
+        .header {{ background:#000; padding:20px; text-align:center; }}
+        .header img {{ max-height:60px; }}
+        h2 {{ color:#333; }}
+        p {{ color:#555; line-height:1.5; }}
+        .btn {{ display:inline-block; margin-top:20px; padding:12px 24px; background:#000; color:#fff !important; text-decoration:none; border-radius:8px; font-weight:bold; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <img src='cid:LogoNM' alt='NM Relojes'>
+        </div>
+        <div class='content'>
+            <h2>¡Gracias por tu compra!</h2>
+            <p>Tu pedido <b>#{numeroPedido}</b> ha sido recibido y estamos procesándolo.</p>
+            {tablaProductos}
+            <p>Pronto recibirás más información sobre el envío.</p>
+            <a href='https://nmrelojes.com' class='btn'>Ir a la tienda</a>
+        </div>
+    </div>
+</body>
+</html>";
 
-            using (var smtp = new SmtpClient
+            // Crear la vista HTML con logo embebido
+            AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+            var logoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot/uploads/logo.jpeg");
+
+            if (File.Exists(logoPath))
             {
-                Host = _settings.SmtpServer,
-                Port = _settings.Port,
-                EnableSsl = _settings.EnableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
-            })
+                LinkedResource logo = new LinkedResource(logoPath);
+                logo.ContentId = "LogoNM"; // debe coincidir con el cid del <img>
+                htmlView.LinkedResources.Add(logo);
+            }
+
             using (var message = new MailMessage(fromAddress, toAddress)
             {
                 Subject = subject,
-                Body = body,
                 IsBodyHtml = true
             })
             {
-                smtp.Send(message);
+                message.AlternateViews.Add(htmlView);
+
+                using (var smtp = new SmtpClient
+                {
+                    Host = _settings.SmtpServer,
+                    Port = _settings.Port,
+                    EnableSsl = _settings.EnableSsl,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
+                })
+                {
+                    smtp.Send(message);
+                }
             }
         }
         catch (Exception ex)
@@ -176,75 +190,99 @@ public class EmailService
     public void EnviarCorreoRecuperacion(string destinatario, string token)
     {
         var resetLink = $"http://localhost:5173/reset-password?token={token}";
-      
-
-
         string subject = "Recupera tu contraseña - NM Relojes";
-        string body = $@"
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset='UTF-8'>
-        <style>
-            body {{ font-family: Arial, sans-serif; background:#f5f5f5; }}
-            .container {{ max-width:600px; margin:30px auto; background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
-            .header {{ background:#000; padding:20px; text-align:center; }}
-            .header img {{ max-height:60px; }}
-            .content {{ padding:30px; text-align:center; }}
-            .btn {{ display:inline-block; margin-top:20px; padding:12px 24px; background:#000; color:#fff !important; text-decoration:none; border-radius:8px; font-weight:bold; }}
-            .footer {{ margin-top:20px; font-size:12px; color:#777; text-align:center; }}
-        </style>
-    </head>
-    <body>
-        <div class='container'>
-            <div class='header'>
-                <img src='https://tusitio.com/logo.png' alt='NM Relojes'>
-            </div>
-            <div class='content'>
-                <h2>¿Olvidaste tu contraseña?</h2>
-                <p>Parece que solicitaste restablecer tu contraseña.</p>
-                <a href='{resetLink}' class='btn'>Restablecer contraseña</a>
-                <p style='margin-top:20px; color:#999;'>Si no fuiste vos, puedes ignorar este mensaje.</p>
-            </div>
-            <div class='footer'>
-                © 2025 NM Relojes - Todos los derechos reservados
-            </div>
-        </div>
-    </body>
-    </html>";
 
-        using (var smtp = new SmtpClient
+        // HTML con cid para el logo
+        string body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; background:#f5f5f5; }}
+        .container {{ max-width:600px; margin:30px auto; background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
+        .header {{ background:#000; padding:20px; text-align:center; }}
+        .header img {{ max-height:60px; }}
+        .content {{ padding:30px; text-align:center; }}
+        .btn {{ display:inline-block; margin-top:20px; padding:12px 24px; background:#000; color:#fff !important; text-decoration:none; border-radius:8px; font-weight:bold; }}
+        .footer {{ margin-top:20px; font-size:12px; color:#777; text-align:center; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <img src='cid:LogoNM' alt='NM Relojes'>
+        </div>
+        <div class='content'>
+            <h2>¿Olvidaste tu contraseña?</h2>
+            <p>Parece que solicitaste restablecer tu contraseña.</p>
+            <a href='{resetLink}' class='btn'>Restablecer contraseña</a>
+            <p style='margin-top:20px; color:#999;'>Si no fuiste vos, puedes ignorar este mensaje.</p>
+        </div>
+        <div class='footer'>
+            © 2025 NM Relojes - Todos los derechos reservados
+        </div>
+    </div>
+</body>
+</html>";
+
+        // Crear la vista HTML con logo embebido
+        AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+        var logoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot/uploads/logo.jpeg");
+
+        if (File.Exists(logoPath))
         {
-            Host = _settings.SmtpServer,
-            Port = _settings.Port,
-            EnableSsl = _settings.EnableSsl,
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
-        })
-        using (var message = new MailMessage(_settings.SenderEmail, destinatario, subject, body)
+            LinkedResource logo = new LinkedResource(logoPath);
+            logo.ContentId = "LogoNM"; // debe coincidir con el cid del <img>
+            htmlView.LinkedResources.Add(logo);
+        }
+
+        var fromAddress = new MailAddress(_settings.SenderEmail, _settings.SenderName);
+
+        using (var message = new MailMessage(fromAddress, new MailAddress(destinatario))
         {
+            Subject = subject,
             IsBodyHtml = true
         })
         {
-            smtp.Send(message);
+            message.AlternateViews.Add(htmlView);
+
+            using (var smtp = new SmtpClient
+            {
+                Host = _settings.SmtpServer,
+                Port = _settings.Port,
+                EnableSsl = _settings.EnableSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
+            })
+            {
+                smtp.Send(message);
+            }
         }
     }
 
+
     public async Task SendEmailAsync(string subject, string body, string? replyTo = null)
     {
-        using var client = new SmtpClient(_settings.SmtpServer, _settings.Port)
+        var fromAddress = new MailAddress(_settings.SenderEmail, _settings.SenderName);
+
+        // Crear la vista HTML con logo embebido
+        AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+        var logoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot/uploads/logo.jpeg");
+
+        if (File.Exists(logoPath))
         {
-            Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password),
-            EnableSsl = _settings.EnableSsl
-        };
+            LinkedResource logo = new LinkedResource(logoPath);
+            logo.ContentId = "LogoNM"; // debe coincidir con el cid del <img>
+            htmlView.LinkedResources.Add(logo);
+        }
 
         var mailMessage = new MailMessage
         {
-            From = new MailAddress(_settings.SenderEmail, _settings.SenderName),
+            From = fromAddress,
             Subject = subject,
-            Body = body,
-            IsBodyHtml = true // si querés HTML
+            IsBodyHtml = true
         };
 
         // destinatario = vos mismo
@@ -253,6 +291,15 @@ public class EmailService
         // replyTo = mail del cliente
         if (!string.IsNullOrEmpty(replyTo))
             mailMessage.ReplyToList.Add(new MailAddress(replyTo));
+
+        // Agregar la vista con logo embebido
+        mailMessage.AlternateViews.Add(htmlView);
+
+        using var client = new SmtpClient(_settings.SmtpServer, _settings.Port)
+        {
+            Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password),
+            EnableSsl = _settings.EnableSsl
+        };
 
         await client.SendMailAsync(mailMessage);
     }
@@ -271,50 +318,64 @@ public class EmailService
                 : $"<p>Podés hacer el seguimiento con este número: <b>{tracking}</b></p>";
 
             string body = $@"
-        <html>
-        <head>
-          <meta charset='UTF-8'>
-          <style>
-            body {{ font-family: Arial, sans-serif; background:#f5f5f5; }}
-            .container {{ max-width:600px; margin:30px auto; background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
-            .header {{ background:#000; padding:20px; text-align:center; }}
-            .header img {{ max-height:60px; }}
-            .content {{ padding:20px; text-align:center; }}
-            .btn {{ display:inline-block; margin-top:20px; padding:12px 24px; background:#000; color:#fff; text-decoration:none; border-radius:8px; font-weight:bold; }}
-          </style>
-        </head>
-        <body>
-          <div class='container'>
-            <div class='header'>
-              <img src='https://tusitio.com/logo.png' alt='NM Relojes'>
-            </div>
-            <div class='content'>
-              <h2>¡Tu pedido #{numeroPedido} ya está en camino!</h2>
-              <p>Te avisamos que tu pedido fue despachado y pronto lo vas a recibir.</p>
-              {trackingInfo}
-              <a href='https://nmrelojes.com' class='btn'>Ver más productos</a>
-            </div>
-          </div>
-        </body>
-        </html>";
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <style>
+    body {{ font-family: Arial, sans-serif; background:#f5f5f5; }}
+    .container {{ max-width:600px; margin:30px auto; background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
+    .header {{ background:#000; padding:20px; text-align:center; }}
+    .header img {{ max-height:60px; }}
+    .content {{ padding:20px; text-align:center; }}
+    .btn {{ display:inline-block; margin-top:20px; padding:12px 24px; background:#000; color:#fff; text-decoration:none; border-radius:8px; font-weight:bold; }}
+  </style>
+</head>
+<body>
+  <div class='container'>
+    <div class='header'>
+      <img src='cid:LogoNM' alt='NM Relojes'>
+    </div>
+    <div class='content'>
+      <h2>¡Tu pedido #{numeroPedido} ya está en camino!</h2>
+      <p>Te avisamos que tu pedido fue despachado y pronto lo vas a recibir.</p>
+      {trackingInfo}
+      <a href='https://nmrelojes.com' class='btn'>Ver más productos</a>
+    </div>
+  </div>
+</body>
+</html>";
 
-            using (var smtp = new SmtpClient
+            // Crear la vista HTML con logo embebido
+            AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+            var logoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot/uploads/logo.jpeg");
+
+            if (File.Exists(logoPath))
             {
-                Host = _settings.SmtpServer,
-                Port = _settings.Port,
-                EnableSsl = _settings.EnableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
-            })
+                LinkedResource logo = new LinkedResource(logoPath);
+                logo.ContentId = "LogoNM"; // debe coincidir con el cid del <img>
+                htmlView.LinkedResources.Add(logo);
+            }
+
             using (var message = new MailMessage(fromAddress, toAddress)
             {
                 Subject = subject,
-                Body = body,
                 IsBodyHtml = true
             })
             {
-                smtp.Send(message);
+                message.AlternateViews.Add(htmlView);
+
+                using (var smtp = new SmtpClient
+                {
+                    Host = _settings.SmtpServer,
+                    Port = _settings.Port,
+                    EnableSsl = _settings.EnableSsl,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
+                })
+                {
+                    smtp.Send(message);
+                }
             }
         }
         catch (Exception ex)
@@ -333,49 +394,63 @@ public class EmailService
             string subject = $"Pedido #{numeroPedido} entregado ✅";
 
             string body = $@"
-        <html>
-        <head>
-          <meta charset='UTF-8'>
-          <style>
-            body {{ font-family: Arial, sans-serif; background:#f5f5f5; }}
-            .container {{ max-width:600px; margin:30px auto; background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
-            .header {{ background:#000; padding:20px; text-align:center; }}
-            .header img {{ max-height:60px; }}
-            .content {{ padding:20px; text-align:center; }}
-          </style>
-        </head>
-        <body>
-          <div class='container'>
-            <div class='header'>
-              <img src='https://tusitio.com/logo.png' alt='NM Relojes'>
-            </div>
-            <div class='content'>
-              <h2>¡Pedido entregado!</h2>
-              <p>Tu pedido <b>#{numeroPedido}</b> fue entregado con éxito.</p>
-              <p>Esperamos que disfrutes tu compra ❤️</p>
-              <p>Gracias por elegir <b>NM Relojes</b>.</p>
-            </div>
-          </div>
-        </body>
-        </html>";
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <style>
+    body {{ font-family: Arial, sans-serif; background:#f5f5f5; }}
+    .container {{ max-width:600px; margin:30px auto; background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
+    .header {{ background:#000; padding:20px; text-align:center; }}
+    .header img {{ max-height:60px; }}
+    .content {{ padding:20px; text-align:center; }}
+  </style>
+</head>
+<body>
+  <div class='container'>
+    <div class='header'>
+      <img src='cid:LogoNM' alt='NM Relojes'>
+    </div>
+    <div class='content'>
+      <h2>¡Pedido entregado!</h2>
+      <p>Tu pedido <b>#{numeroPedido}</b> fue entregado con éxito.</p>
+      <p>Esperamos que disfrutes tu compra ❤️</p>
+      <p>Gracias por elegir <b>NM Relojes</b>.</p>
+    </div>
+  </div>
+</body>
+</html>";
 
-            using (var smtp = new SmtpClient
+            // Crear la vista HTML con logo embebido
+            AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+            var logoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot/uploads/logo.jpeg");
+
+            if (File.Exists(logoPath))
             {
-                Host = _settings.SmtpServer,
-                Port = _settings.Port,
-                EnableSsl = _settings.EnableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
-            })
+                LinkedResource logo = new LinkedResource(logoPath);
+                logo.ContentId = "LogoNM"; // debe coincidir con el cid del <img>
+                htmlView.LinkedResources.Add(logo);
+            }
+
             using (var message = new MailMessage(fromAddress, toAddress)
             {
                 Subject = subject,
-                Body = body,
                 IsBodyHtml = true
             })
             {
-                smtp.Send(message);
+                message.AlternateViews.Add(htmlView);
+
+                using (var smtp = new SmtpClient
+                {
+                    Host = _settings.SmtpServer,
+                    Port = _settings.Port,
+                    EnableSsl = _settings.EnableSsl,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
+                })
+                {
+                    smtp.Send(message);
+                }
             }
         }
         catch (Exception ex)
@@ -383,7 +458,8 @@ public class EmailService
             Console.WriteLine("Error al enviar correo de pedido entregado: " + ex.Message);
         }
     }
-    public void EnviarCorreoArrepentimiento(string destinatarioCliente, string nombre, string telefono, string codigoCompra, string inconveniente)
+
+    public void EnviarCorreoArrepentimiento(string nombre, string telefono, string destinatarioCliente, string codigoCompra, string inconveniente)
     {
         try
         {
@@ -393,37 +469,66 @@ public class EmailService
             string subject = $"Solicitud de arrepentimiento de compra - {nombre}";
 
             string body = $@"
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-        </head>
-        <body>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; background:#f5f5f5; }}
+        .container {{ max-width:600px; margin:30px auto; background:#fff; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }}
+        .header {{ background:#000; padding:20px; text-align:center; }}
+        .header img {{ max-height:60px; }}
+        .content {{ padding:20px; }}
+        .content p {{ line-height:1.5; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <img src='cid:LogoNM' alt='NM Relojes'>
+        </div>
+        <div class='content'>
             <h2>Solicitud de arrepentimiento de compra</h2>
             <p><b>Nombre:</b> {nombre}</p>
             <p><b>Teléfono:</b> {telefono}</p>
             <p><b>Email:</b> {destinatarioCliente}</p>
             <p><b>Código de compra:</b> {codigoCompra}</p>
             <p><b>Inconveniente:</b> {inconveniente}</p>
-        </body>
-        </html>";
+        </div>
+    </div>
+</body>
+</html>";
 
-            using (var smtp = new SmtpClient
+            // Vista HTML con logo embebido
+            AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+            var logoPath = Path.Combine(AppContext.BaseDirectory, "wwwroot/uploads/logo.jpeg");
+
+            if (File.Exists(logoPath))
             {
-                Host = _settings.SmtpServer,
-                Port = _settings.Port,
-                EnableSsl = _settings.EnableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
-            })
+                LinkedResource logo = new LinkedResource(logoPath);
+                logo.ContentId = "LogoNM"; // debe coincidir con el cid del <img>
+                htmlView.LinkedResources.Add(logo);
+            }
+
             using (var message = new MailMessage(fromAddress, toAddress)
             {
                 Subject = subject,
-                Body = body,
                 IsBodyHtml = true
             })
             {
-                smtp.Send(message);
+                message.AlternateViews.Add(htmlView);
+
+                using (var smtp = new SmtpClient
+                {
+                    Host = _settings.SmtpServer,
+                    Port = _settings.Port,
+                    EnableSsl = _settings.EnableSsl,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
+                })
+                {
+                    smtp.Send(message);
+                }
             }
         }
         catch (Exception ex)
@@ -431,6 +536,7 @@ public class EmailService
             Console.WriteLine("Error al enviar correo de arrepentimiento: " + ex.Message);
         }
     }
+
 
 }
 
