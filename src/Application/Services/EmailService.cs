@@ -26,62 +26,21 @@ public class EmailService
 <head>
   <meta charset='UTF-8'>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 30px auto;
-      background: #ffffff;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .header {
-      background: #000000;
-      padding: 20px;
-      text-align: center;
-    }
-    .header img {
-      max-height: 60px;
-    }
-    .content {
-      padding: 30px;
-      text-align: center;
-    }
-    .content h2 {
-      color: #333333;
-    }
-    .content p {
-      color: #555555;
-      line-height: 1.5;
-    }
-    .btn {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 12px 24px;
-      background: #000000;
-      color: #ffffff !important;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-    }
-    .footer {
-      background: #f0f0f0;
-      padding: 15px;
-      text-align: center;
-      font-size: 12px;
-      color: #777777;
-    }
+    body { font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .header { background: #000000; padding: 20px; text-align: center; }
+    .header img { max-height: 60px; }
+    .content { padding: 30px; text-align: center; }
+    .content h2 { color: #333333; }
+    .content p { color: #555555; line-height: 1.5; }
+    .btn { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #000000; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { background: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #777777; }
   </style>
 </head>
 <body>
   <div class='container'>
     <div class='header'>
-      <img src='https://tusitio.com/logo.png' alt='NM Relojes'>
+      <img src='cid:LogoNM' alt='NM Relojes'>
     </div>
     <div class='content'>
       <h2>¡Bienvenido a <b>NM Relojes</b>!</h2>
@@ -97,25 +56,37 @@ public class EmailService
 </body>
 </html>";
 
+            // Crear la vista HTML con el logo embebido
+            AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
+            var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads/logo.jpeg");
 
-            var smtp = new SmtpClient
+            if (File.Exists(logoPath))
             {
-                Host = _settings.SmtpServer,
-                Port = _settings.Port,
-                EnableSsl = _settings.EnableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
-            };
+                LinkedResource logo = new LinkedResource(logoPath);
+                logo.ContentId = "LogoNM"; // debe coincidir con el src del <img>
+                htmlView.LinkedResources.Add(logo);
+            }
 
             using (var message = new MailMessage(fromAddress, toAddress)
             {
                 Subject = subject,
-                Body = body,
                 IsBodyHtml = true
             })
             {
-                smtp.Send(message);
+                message.AlternateViews.Add(htmlView);
+
+                using (var smtp = new SmtpClient
+                {
+                    Host = _settings.SmtpServer,
+                    Port = _settings.Port,
+                    EnableSsl = _settings.EnableSsl,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
+                })
+                {
+                    smtp.Send(message);
+                }
             }
         }
         catch (Exception ex)
