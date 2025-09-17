@@ -23,6 +23,10 @@ public class VentaResponseDto
     public string PaymentMethod { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
 
+    // 🔹 Nuevos campos derivados de Notes
+    public string CouponCode { get; set; } = string.Empty;
+    public decimal CouponDiscount { get; set; }
+
     public decimal PaymentDiscount { get; set; }
     public decimal TotalConDescuento { get; set; }
 
@@ -39,8 +43,8 @@ public class VentaResponseDto
 
     // Items
     public List<VentaItemDto> Items { get; set; } = new();
-
 }
+
 
 public class VentaItemResponseDto
 {

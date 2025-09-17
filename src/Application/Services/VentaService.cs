@@ -37,7 +37,7 @@ namespace Application.Services
             // 🔹 Calcular subtotal sumando todos los items
             decimal subtotal = v.DetalleVentas?.Sum(d => d.Subtotal) ?? 0;
 
-            // 🔹 Calcular descuento según método de pago
+            // 🔹 Descuento por método de pago
             decimal paymentDiscount = 0;
             if (!string.IsNullOrEmpty(v.PaymentMethod))
             {
@@ -48,8 +48,44 @@ namespace Application.Services
                 }
             }
 
-            // 🔹 Total final con descuento incluido
-            decimal totalConDescuento = v.Total - paymentDiscount;
+            // 🔹 Descuento por cupón (parseado desde Notes)
+            decimal couponDiscount = 0;
+            string couponCode = string.Empty;
+
+            if (!string.IsNullOrEmpty(v.Notes))
+            {
+                // Buscamos dentro de los corchetes [CUPON:XXX - DESCUENTO:YYY]
+                var start = v.Notes.IndexOf('[');
+                var end = v.Notes.IndexOf(']');
+
+                if (start >= 0 && end > start)
+                {
+                    var inside = v.Notes.Substring(start + 1, end - start - 1);
+
+                    // Dividimos por "-" porque ese es tu separador
+                    var parts = inside.Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var part in parts)
+                    {
+                        if (part.Trim().StartsWith("CUPON:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            couponCode = part.Replace("CUPON:", "", StringComparison.OrdinalIgnoreCase).Trim();
+                        }
+                        else if (part.Trim().StartsWith("DESCUENTO:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (decimal.TryParse(
+                                    part.Replace("DESCUENTO:", "", StringComparison.OrdinalIgnoreCase).Trim(),
+                                    out var parsedDiscount))
+                            {
+                                couponDiscount = parsedDiscount;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 🔹 Total final con descuentos (pago + cupón)
+            decimal totalConDescuento = v.Total - paymentDiscount - couponDiscount;
 
             return new VentaResponseDto
             {
@@ -73,6 +109,8 @@ namespace Application.Services
                 Status = v.Status.ToString(),
                 Total = v.Total, // total original (sin descuento)
                 PaymentDiscount = paymentDiscount,
+                CouponCode = couponCode,
+                CouponDiscount = couponDiscount,
                 TotalConDescuento = totalConDescuento,
                 ExternalReference = v.ExternalReference ?? string.Empty,
                 Items = v.DetalleVentas.Select(d => new VentaItemDto
@@ -85,6 +123,7 @@ namespace Application.Services
                 }).ToList()
             };
         }
+
         public List<VentaResponseDto> GetAll()
         {
             var ventas = _ventaRepository.GetAll() ?? new List<Venta>();
