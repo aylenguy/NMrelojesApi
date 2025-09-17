@@ -18,7 +18,7 @@ public class ArrepentimientoController : ControllerBase
             request.Email,
             request.Nombre,
             request.Telefono,
-            request.CodigoCompra,
+            request.NumeroPedido,
             request.Inconveniente
         );
 
@@ -31,6 +31,8 @@ public class ArrepentimientoRequest
     public string Nombre { get; set; }
     public string Telefono { get; set; }
     public string Email { get; set; }
-  
+
+    public string NumeroPedido { get; set; }
+
     public string Inconveniente { get; set; }
 }
