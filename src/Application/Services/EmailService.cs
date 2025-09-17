@@ -412,6 +412,54 @@ public class EmailService
             Console.WriteLine("Error al enviar correo de pedido entregado: " + ex.Message);
         }
     }
+    public void EnviarCorreoArrepentimiento(string destinatarioCliente, string nombre, string telefono, string codigoCompra, string inconveniente)
+    {
+        try
+        {
+            var fromAddress = new MailAddress(_settings.SenderEmail, _settings.SenderName);
+            var toAddress = new MailAddress(_settings.SenderEmail); // tu mail donde recibes la solicitud
+
+            string subject = $"Solicitud de arrepentimiento de compra - {nombre}";
+
+            string body = $@"
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+        </head>
+        <body>
+            <h2>Solicitud de arrepentimiento de compra</h2>
+            <p><b>Nombre:</b> {nombre}</p>
+            <p><b>Teléfono:</b> {telefono}</p>
+            <p><b>Email:</b> {destinatarioCliente}</p>
+            <p><b>Código de compra:</b> {codigoCompra}</p>
+            <p><b>Inconveniente:</b> {inconveniente}</p>
+        </body>
+        </html>";
+
+            using (var smtp = new SmtpClient
+            {
+                Host = _settings.SmtpServer,
+                Port = _settings.Port,
+                EnableSsl = _settings.EnableSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
+            })
+            using (var message = new MailMessage(fromAddress, toAddress)
+            {
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = true
+            })
+            {
+                smtp.Send(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al enviar correo de arrepentimiento: " + ex.Message);
+        }
+    }
 
 }
 
