@@ -127,7 +127,7 @@ namespace Infrastructure.Data
             {
                 Id = 5,
                 Name = "Mela",
-                Price = 693300,
+                Price = 69330,
                 OldPrice = 69330,
                 Stock = 1,
                 Image = "relojhombre.jpg", // <- cambiamos aquí
@@ -166,26 +166,6 @@ namespace Infrastructure.Data
             new Product
             {
                 Id = 7,
-                Name = "Mica",
-                Price = 110000,
-                OldPrice = 110000,
-                Stock = 1,
-                Image = "relojhombre.jpg", // <- cambiamos aquí
-                Description = "Este reloj tiene malla con eslabones, el cual necesita de un relojero para poder ajustarlo, si queres podes dejarnos en comentarios el tamaño de tu muñeca y nos encargamos de enviártelo ajustado listo para usar.\r\n\r\nOtras características:\r\n-Analógico\r\n-Sumergible WR50\r\n-Agujas luminiscentes\r\n-Calendario\r\n-Caja y malla de acero\r\n-Diámetro: 3,8cm",
-                Color = "Dorado",
-                Brand = "Kosiuko",
-                Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
-            }
-
-
-
-
-
-        );
-            modelBuilder.Entity<Product>().HasData(
-            new Product
-            {
-                Id = 8,
                 Name = "Mia",
                 Price = 69331,
                 OldPrice = 69331,
@@ -203,7 +183,7 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Product>().HasData(
             new Product
             {
-                Id = 9,
+                Id = 8,
                 Name = "Abby",
                 Price = 100000,
                 OldPrice = 100000,
@@ -221,7 +201,7 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Product>().HasData(
                new Product
                {
-                   Id = 10,
+                   Id = 9,
                    Name = "Rita",
                    Price = 60480,
                    OldPrice = 64700,
@@ -239,7 +219,7 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Product>().HasData(
            new Product
            {
-               Id = 11,
+               Id = 10,
                Name = "Génova",
                Price = 74050,
                OldPrice = 74050,
@@ -257,7 +237,7 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Product>().HasData(
            new Product
            {
-               Id = 12,
+               Id = 11,
                Name = "Berlin",
                Price = 69330,
                OldPrice = 69330,
@@ -274,7 +254,7 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Product>().HasData(
           new Product
           {
-              Id = 13,
+              Id = 12,
               Name = "Paula",
               Price = 73344,
               OldPrice = 73344,
@@ -291,15 +271,15 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Product>().HasData(
          new Product
          {
-             Id = 14,
+             Id = 13,
              Name = "Lucia",
              Price = 73920,
              OldPrice = 73920,
              Stock = 1,
              Image = "relojhombre.jpg", // <- cambiamos aquí
              Description = "-Analógico\r\n-Resistente al agua W30\r\n-Malla de silicona sin glitter\r\n-Caja de plástico ABS\r\n-Tapa de acero\r\n-Hebilla de plástico\r\n-Diámetro del reloj : 4,2  cm",
-             Color = "Plateado",
-             Brand = "Nude",
+             Color = "Nude",
+             Brand = "Tressa",
              Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
          }
 
@@ -308,7 +288,7 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Product>().HasData(
          new Product
          {
-             Id = 15,
+             Id = 14,
              Name = "Ari",
              Price = 93600,
              OldPrice = 93600,
@@ -325,7 +305,7 @@ namespace Infrastructure.Data
             modelBuilder.Entity<Product>().HasData(
          new Product
          {
-             Id = 16,
+             Id = 15,
              Name = "Ema",
              Price = 93600,
              OldPrice = 93600,
@@ -339,7 +319,24 @@ namespace Infrastructure.Data
 
 
      );
-         
+            modelBuilder.Entity<Product>().HasData(
+       new Product
+       {
+           Id = 16,
+           Name = "Naomi",
+           Price = 89700,
+           OldPrice = 89700,
+           Stock = 1,
+           Image = "relojhombre.jpg", // <- cambiamos aquí
+           Description = "– Analógico\r\n– Resistencia al agua\r\n– Calendario\r\n– Strass\r\n– Caja de ABS y aluminio\r\n– Tapa de acero\r\n– Malla de aluminio\r\n– Cierre de acero\r\n– Diámetro del reloj: 42 mm.",
+           Color = "Negro",
+           Brand = "Kosiuko",
+           Specs = ""
+       }
+
+
+   );
+
 
             // Relación Client -> Venta (1:N)
             modelBuilder.Entity<Client>()
