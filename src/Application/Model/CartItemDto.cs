@@ -10,5 +10,7 @@ public class CartItemDto
     public string Brand { get; set; }  // <-- nuevo
     public string ImageUrl { get; set; }
 
+    
+
     public decimal Subtotal => Quantity * UnitPrice;
 }
