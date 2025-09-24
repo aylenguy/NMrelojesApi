@@ -44,7 +44,7 @@ public class PaymentServiceSandbox : IPaymentService
                     Pending = dto.BackUrls?.Pending ?? _configuration["FrontEndUrls:Pending"]
                 },
 
-                AutoReturn = "approved", // 👈 para que vuelva solo al success si se aprueba
+               // AutoReturn = "approved", // 👈 para que vuelva solo al success si se aprueba
 
                 ExternalReference = dto.ExternalReference,
                 NotificationUrl = dto.NotificationUrl
