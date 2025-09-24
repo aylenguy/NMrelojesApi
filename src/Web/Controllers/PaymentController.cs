@@ -90,7 +90,7 @@ namespace Web.Controllers
         public async Task<IActionResult> Webhook([FromBody] JsonElement notification, [FromServices] IConfiguration configuration)
         {
             if (notification.ValueKind == JsonValueKind.Undefined || notification.ValueKind == JsonValueKind.Null)
-                return BadRequest();
+                return Ok(); // 👈 devolvemos 200 igual, para que MP no siga reintentando
 
             try
             {
@@ -103,16 +103,19 @@ namespace Web.Controllers
 
                 _logger.LogInformation("Webhook recibido: {Notification}", notification.ToString());
 
-                if (!notification.TryGetProperty("type", out var typeProp) ||
-                    !notification.TryGetProperty("data", out var dataProp) ||
-                    !dataProp.TryGetProperty("id", out var idProp))
-                {
-                    _logger.LogWarning("Notificación inválida: {Notification}", notification.ToString());
-                    return BadRequest();
-                }
+                string type = null;
+                string id = null;
 
-                var type = typeProp.GetString();
-                var id = idProp.GetString();
+                try
+                {
+                    type = notification.GetProperty("type").GetString();
+                    id = notification.GetProperty("data").GetProperty("id").GetString();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error al leer la notificación de MP: {Notification}", notification.ToString());
+                    return Ok(); // 👈 devolvemos 200 aunque no pudimos procesar
+                }
 
                 if (type == "payment" && !string.IsNullOrEmpty(id))
                 {
@@ -123,19 +126,22 @@ namespace Web.Controllers
 
                     var response = await httpClient.SendAsync(request);
                     var json = await response.Content.ReadAsStringAsync();
+
+                    _logger.LogInformation("Respuesta de MP para payment {PaymentId}: {Json}", id, json);
+
                     var paymentInfo = JsonSerializer.Deserialize<MercadoPagoPaymentDto>(json);
 
                     if (paymentInfo == null)
                     {
                         _logger.LogWarning("No se pudo deserializar paymentInfo");
-                        return BadRequest();
+                        return Ok(); // 👈 devolvemos 200 igual
                     }
 
                     var venta = await _ventaRepository.GetByExternalReferenceAsync(paymentInfo.ExternalReference);
 
                     if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
                     {
-                        venta.Status = VentaStatus.Enviado; // o Pagado
+                        venta.Status = VentaStatus.Pagado; // 👈 mejor Pagado, no Enviado
                         venta.PaymentId = paymentInfo.Id.ToString();
                         venta.PaymentStatus = paymentInfo.Status;
                         venta.StatusDetail = paymentInfo.StatusDetail;
@@ -167,6 +173,10 @@ namespace Web.Controllers
 
                         _logger.LogInformation("Venta {VentaId} confirmada y correo enviado", venta.Id);
                     }
+                    else
+                    {
+                        _logger.LogInformation("Pago {PaymentId} recibido con estado {Status}, no se actualizó la venta", id, paymentInfo.Status);
+                    }
                 }
 
                 return Ok();
@@ -174,9 +184,10 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error procesando webhook de Mercado Pago");
-                return StatusCode(500);
+                return Ok(); // 👈 devolvemos 200 igual para que MP no reintente infinito
             }
         }
+
     }
 }
 
