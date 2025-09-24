@@ -52,14 +52,14 @@ namespace Web.Controllers
             try
             {
                 // ✅ 1. Validar que todos los productos existan
-                foreach (var item in dto.Items)
-                {
-                    var product = await _productRepository.GetByIdAsync(item.ProductId);
-                    if (product == null)
-                    {
-                        return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
-                    }
-                }
+               // foreach (var item in dto.Items)
+                //{
+                  //  var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    //if (product == null)
+                    //{
+                      //  return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
+                    //}
+                //}
 
                 // ✅ 2. Crear la venta en estado Pendiente
                 var venta = new Venta
@@ -70,7 +70,7 @@ namespace Web.Controllers
                     CustomerEmail = dto.PayerEmail ?? string.Empty,
                     DetalleVentas = dto.Items.Select(i => new DetalleVenta
                     {
-                        ProductId = i.ProductId,
+                      //  ProductId = i.ProductId,
                         Quantity = i.Quantity,
                         UnitPrice = i.UnitPrice,
                         Subtotal = i.UnitPrice * i.Quantity
