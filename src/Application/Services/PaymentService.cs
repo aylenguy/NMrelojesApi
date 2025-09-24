@@ -4,9 +4,7 @@ using Application.Model.Request;
 using Microsoft.Extensions.Configuration;
 using Application.Interfaces;
 using Application.Model.Response;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 public class PaymentServiceSandbox : IPaymentService
 {

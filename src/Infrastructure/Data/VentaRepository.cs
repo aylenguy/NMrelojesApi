@@ -50,6 +50,12 @@ namespace Infrastructure.Data
             await _context.SaveChangesAsync();
         }
 
+        public async Task AddAsync(Venta venta)
+        {
+            await _context.Ventas.AddAsync(venta);
+            await _context.SaveChangesAsync();
+        }
+
         public Venta? GetById(int id)
         {
             return _context.Ventas

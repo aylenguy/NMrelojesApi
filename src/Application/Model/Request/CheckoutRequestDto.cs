@@ -22,6 +22,8 @@ public class CheckoutItemDto
     public string Title { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+
+    public int ProductId { get; set; }
 }
 
 public class BackUrlsDto

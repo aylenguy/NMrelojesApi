@@ -5,7 +5,6 @@ using Application.Model.Request;
 using Application.Model;
 using Domain.Entities;
 using Domain.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace Web.Controllers
 {
@@ -19,6 +18,7 @@ namespace Web.Controllers
         private readonly IVentaRepository _ventaRepository;
         private readonly IProductRepository _productRepository;
         private readonly string _accessToken;
+        private readonly EmailService _emailService;
 
         public PaymentController(
             IPaymentService paymentService,
@@ -26,7 +26,8 @@ namespace Web.Controllers
             ILogger<PaymentController> logger,
             IConfiguration configuration,
             IVentaRepository ventaRepository,
-            IProductRepository productRepository
+            IProductRepository productRepository,
+            EmailService emailService
         )
         {
             _paymentService = paymentService;
@@ -35,6 +36,7 @@ namespace Web.Controllers
             _accessToken = configuration["MercadoPago:AccessToken"];
             _ventaRepository = ventaRepository;
             _productRepository = productRepository;
+            _emailService = emailService;
         }
 
         [HttpPost("create-payment")]
@@ -49,7 +51,29 @@ namespace Web.Controllers
         {
             try
             {
+                // Crear la venta en la base con estado Pendiente
+                var venta = new Venta
+                {
+                    Date = DateTime.UtcNow,
+                    Status = VentaStatus.Pendiente,
+                    ExternalReference = Guid.NewGuid().ToString(),
+                    CustomerEmail = dto.PayerEmail ?? string.Empty,
+                    DetalleVentas = dto.Items.Select(i => new DetalleVenta
+                    {
+                        ProductId = i.ProductId,
+                        Quantity = i.Quantity,
+                        UnitPrice = i.UnitPrice,
+                        Subtotal = i.UnitPrice * i.Quantity
+                    }).ToList()
+                };
+
+                venta.Total = venta.DetalleVentas.Sum(d => d.Subtotal);
+                await _ventaRepository.AddAsync(venta);
+
+                // Asociar ese ExternalReference a MercadoPago
+                dto.ExternalReference = venta.ExternalReference;
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
+
                 if (preference == null)
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
@@ -63,13 +87,20 @@ namespace Web.Controllers
         }
 
         [HttpPost("webhook")]
-        public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
+        public async Task<IActionResult> Webhook([FromBody] JsonElement notification, [FromServices] IConfiguration configuration)
         {
             if (notification.ValueKind == JsonValueKind.Undefined || notification.ValueKind == JsonValueKind.Null)
                 return BadRequest();
 
             try
             {
+                // 🔹 Verificar que las variables de entorno estén cargadas
+                var webhookSecret = configuration["MercadoPago:WebhookSecret"];
+                _logger.LogInformation("AccessToken cargado: {AccessTokenLoaded}",
+                    string.IsNullOrEmpty(_accessToken) ? "NO CARGADO" : "CARGADO");
+                _logger.LogInformation("WebhookSecret cargado: {WebhookSecretLoaded}",
+                    string.IsNullOrEmpty(webhookSecret) ? "NO CARGADO" : "CARGADO");
+
                 _logger.LogInformation("Webhook recibido: {Notification}", notification.ToString());
 
                 if (!notification.TryGetProperty("type", out var typeProp) ||
@@ -104,7 +135,12 @@ namespace Web.Controllers
 
                     if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
                     {
-                        venta.Status = VentaStatus.Enviado; // ✅ Usar tu estado existente
+                        venta.Status = VentaStatus.Enviado; // o Pagado
+                        venta.PaymentId = paymentInfo.Id.ToString();
+                        venta.PaymentStatus = paymentInfo.Status;
+                        venta.StatusDetail = paymentInfo.StatusDetail;
+                        venta.TransactionAmount = paymentInfo.TransactionAmount;
+
                         foreach (var detalle in venta.DetalleVentas)
                         {
                             var product = await _productRepository.GetByIdAsync(detalle.ProductId);
@@ -114,10 +150,23 @@ namespace Web.Controllers
                                 await _productRepository.UpdateAsync(product);
                             }
                         }
-                        await _ventaRepository.UpdateAsync(venta);
-                        _logger.LogInformation("Venta actualizada a Enviado: {VentaId}", venta.Id);
-                    }
 
+                        await _ventaRepository.UpdateAsync(venta);
+
+                        // Enviar correo de confirmación de compra
+                        var productos = venta.DetalleVentas
+                            .Select(d => (d.Product.Name, d.Quantity, d.UnitPrice))
+                            .ToList();
+
+                        _emailService.EnviarCorreoConfirmacionCompra(
+                            venta.CustomerEmail,
+                            venta.Id.ToString(),
+                            productos,
+                            venta.Total
+                        );
+
+                        _logger.LogInformation("Venta {VentaId} confirmada y correo enviado", venta.Id);
+                    }
                 }
 
                 return Ok();
@@ -130,3 +179,4 @@ namespace Web.Controllers
         }
     }
 }
+
