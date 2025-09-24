@@ -55,7 +55,7 @@
     public enum VentaStatus
     {
         Pendiente,
-        Pagado,
+         Pagado, 
         Enviado,
         Entregado,
         Cancelado

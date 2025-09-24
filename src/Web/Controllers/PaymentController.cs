@@ -46,36 +46,42 @@ namespace Web.Controllers
             var paymentResult = await _paymentService.CreatePaymentAsync(dto);
             return Ok(paymentResult);
         }
-
         [HttpPost("create-checkout")]
         public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequestDto dto)
         {
             try
             {
-                // ✅ 1. Crear la venta en la base con estado Pendiente
+                // ✅ 1. Validar que todos los productos existan
+                foreach (var item in dto.Items)
+                {
+                    var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    if (product == null)
+                    {
+                        return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
+                    }
+                }
+
+                // ✅ 2. Crear la venta en estado Pendiente
                 var venta = new Venta
                 {
                     Date = DateTime.UtcNow,
                     Status = VentaStatus.Pendiente,
-                    ExternalReference = Guid.NewGuid().ToString(), // o el Id de la venta
+                    ExternalReference = Guid.NewGuid().ToString(),
                     CustomerEmail = dto.PayerEmail ?? string.Empty,
-
-                    // Si querés también mapear datos de shipping o dirección desde el DTO, lo agregamos acá
                     DetalleVentas = dto.Items.Select(i => new DetalleVenta
                     {
-                        ProductId = i.ProductId,        // ✅ ahora existe en CheckoutItemDto
+                        ProductId = i.ProductId,
                         Quantity = i.Quantity,
                         UnitPrice = i.UnitPrice,
                         Subtotal = i.UnitPrice * i.Quantity
                     }).ToList()
                 };
 
-                // calcular el total
                 venta.Total = venta.DetalleVentas.Sum(d => d.Subtotal);
 
                 await _ventaRepository.AddAsync(venta);
 
-                // ✅ 2. Asociar ese ExternalReference a MercadoPago
+                // ✅ 3. Asociar externalReference a MercadoPago
                 dto.ExternalReference = venta.ExternalReference;
 
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
@@ -90,6 +96,7 @@ namespace Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
 
 
 
