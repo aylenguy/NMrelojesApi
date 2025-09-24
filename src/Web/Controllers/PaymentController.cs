@@ -52,7 +52,7 @@ namespace Web.Controllers
         {
             try
             {
-                // 1️⃣ Validar que todos los productos existan
+                // 1️⃣ Validar productos
                 foreach (var item in dto.Items)
                 {
                     var product = await _productRepository.GetByIdAsync(item.ProductId);
@@ -61,11 +61,13 @@ namespace Web.Controllers
                 }
 
                 // 2️⃣ Crear la venta en estado Pendiente
+                var externalReference = Guid.NewGuid().ToString();
+
                 var venta = new Venta
                 {
                     Date = DateTime.UtcNow,
                     Status = VentaStatus.Pendiente,
-                    ExternalReference = Guid.NewGuid().ToString(),
+                    ExternalReference = externalReference,
                     CustomerEmail = dto.PayerEmail ?? string.Empty,
                     DetalleVentas = dto.Items.Select(i => new DetalleVenta
                     {
@@ -83,14 +85,19 @@ namespace Web.Controllers
                                         venta.Id, venta.ExternalReference);
 
                 // 3️⃣ Asociar ExternalReference a MercadoPago
-                dto.ExternalReference = venta.ExternalReference;
+                dto.ExternalReference = externalReference;
 
                 // 4️⃣ Crear preferencia en MercadoPago
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
                 if (preference == null)
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
-                return Ok(preference);
+                // 🔹 5️⃣ Devolver preferencia + externalReference al front
+                return Ok(new
+                {
+                    preference,
+                    externalReference
+                });
             }
             catch (Exception ex)
             {
@@ -145,7 +152,7 @@ namespace Web.Controllers
                         if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
                         {
                             // 🔹 Actualizar estado de venta
-                            venta.Status = VentaStatus.Enviado;
+                            venta.Status = VentaStatus.Pagado;
 
                             foreach (var detalle in venta.DetalleVentas)
                             {
