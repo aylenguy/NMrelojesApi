@@ -83,6 +83,13 @@ public class PaymentServiceSandbox : IPaymentService
                     ?? "https://tusitio.com/api/payment/notifications"
             };
 
+            var json = System.Text.Json.JsonSerializer.Serialize(request, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            Console.WriteLine("[PaymentServiceSandbox] JSON enviado a MercadoPago:");
+            Console.WriteLine(json);
+
             var client = new PreferenceClient();
             var preference = await client.CreateAsync(request);
 
