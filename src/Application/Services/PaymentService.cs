@@ -5,16 +5,18 @@ using Microsoft.Extensions.Configuration;
 using Application.Interfaces;
 using Application.Model.Response;
 
-
 public class PaymentServiceSandbox : IPaymentService
 {
     private readonly string _accessToken;
-    private readonly IConfiguration _configuration; // 👈 faltaba esto
+    private readonly IConfiguration _configuration;
 
     public PaymentServiceSandbox(IConfiguration configuration)
     {
-        _configuration = configuration; // 👈 guardamos la referencia
+        _configuration = configuration;
         _accessToken = _configuration["MercadoPago:AccessToken"];
+        if (string.IsNullOrEmpty(_accessToken))
+            throw new Exception("No se encontró el AccessToken de MercadoPago en la configuración.");
+
         MercadoPagoConfig.AccessToken = _accessToken;
     }
 
@@ -22,6 +24,26 @@ public class PaymentServiceSandbox : IPaymentService
     {
         try
         {
+            // 🔎 Validaciones mínimas
+            if (dto.Items == null || !dto.Items.Any())
+                throw new ArgumentException("Debe enviar al menos un ítem para la preferencia.");
+
+            foreach (var item in dto.Items)
+            {
+                if (string.IsNullOrWhiteSpace(item.Title))
+                    throw new ArgumentException("Cada ítem debe tener un título válido.");
+                if (item.Quantity <= 0)
+                    throw new ArgumentException("La cantidad de cada ítem debe ser mayor a 0.");
+                if (item.UnitPrice <= 0)
+                    throw new ArgumentException("El precio unitario debe ser mayor a 0.");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.CurrencyId))
+                dto.CurrencyId = "ARS"; // 👈 valor por defecto
+
+            if (string.IsNullOrWhiteSpace(dto.PayerEmail))
+                throw new ArgumentException("El email del pagador es obligatorio.");
+
             var request = new PreferenceRequest
             {
                 Items = dto.Items.Select(i => new PreferenceItemRequest
@@ -39,16 +61,26 @@ public class PaymentServiceSandbox : IPaymentService
 
                 BackUrls = new PreferenceBackUrlsRequest
                 {
-                    Success = dto.BackUrls?.Success ?? _configuration["FrontEndUrls:Success"],
-                    Failure = dto.BackUrls?.Failure ?? _configuration["FrontEndUrls:Failure"],
-                    Pending = dto.BackUrls?.Pending ?? _configuration["FrontEndUrls:Pending"]
+                    Success = dto.BackUrls?.Success
+                              ?? _configuration["FrontEndUrls:Success"]
+                              ?? "https://tusitio.com/success",
+                    Failure = dto.BackUrls?.Failure
+                              ?? _configuration["FrontEndUrls:Failure"]
+                              ?? "https://tusitio.com/failure",
+                    Pending = dto.BackUrls?.Pending
+                              ?? _configuration["FrontEndUrls:Pending"]
+                              ?? "https://tusitio.com/pending"
                 },
 
-                AutoReturn = "approved", // 👈 para que vuelva solo al success si se aprueba
+                AutoReturn = "approved",
 
-                ExternalReference = dto.ExternalReference,
+                ExternalReference = string.IsNullOrWhiteSpace(dto.ExternalReference)
+                                   ? Guid.NewGuid().ToString() // 👈 default si no envía nada
+                                   : dto.ExternalReference,
+
                 NotificationUrl = dto.NotificationUrl
-                    ?? _configuration["BackEndUrls:NotificationUrl"] // 🔹 mejor desde config también
+                    ?? _configuration["BackEndUrls:NotificationUrl"]
+                    ?? "https://tusitio.com/api/payment/notifications"
             };
 
             var client = new PreferenceClient();
@@ -73,3 +105,4 @@ public class PaymentServiceSandbox : IPaymentService
         throw new NotImplementedException("Método de pago directo no implementado en Sandbox.");
     }
 }
+
