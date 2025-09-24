@@ -19,7 +19,7 @@ namespace Web.Controllers
         private readonly IVentaRepository _ventaRepository;
         private readonly IProductRepository _productRepository;
         private readonly string _accessToken;
-       // private readonly EmailService _emailService;            
+        private readonly EmailService _emailService;            
 
         public PaymentController(
             IPaymentService paymentService,
@@ -27,8 +27,8 @@ namespace Web.Controllers
             ILogger<PaymentController> logger,
             IConfiguration configuration,
             IVentaRepository ventaRepository,
-            IProductRepository productRepository
-          //  EmailService emailService
+            IProductRepository productRepository,
+            EmailService emailService
         )
         {
             _paymentService = paymentService;
@@ -37,7 +37,7 @@ namespace Web.Controllers
             _accessToken = configuration["MercadoPago:AccessToken"];
             _ventaRepository = ventaRepository;
             _productRepository = productRepository;
-           // _emailService = emailService;
+            _emailService = emailService;
         }
 
         [HttpPost("create-payment")]
@@ -57,9 +57,7 @@ namespace Web.Controllers
                 {
                     var product = await _productRepository.GetByIdAsync(item.ProductId);
                     if (product == null)
-                    {
                         return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
-                    }
                 }
 
                 // 2️⃣ Crear la venta en estado Pendiente
@@ -84,6 +82,31 @@ namespace Web.Controllers
                 _logger.LogInformation("Venta creada con Id {VentaId} y ExternalReference {ExternalReference}",
                                         venta.Id, venta.ExternalReference);
 
+                // 🔹 Enviar correo de confirmación de compra
+                if (!string.IsNullOrEmpty(venta.CustomerEmail))
+                {
+                    var productosCorreo = new List<(string nombreProducto, int cantidad, decimal precio)>();
+
+                    foreach (var detalle in venta.DetalleVentas)
+                    {
+                        var product = await _productRepository.GetByIdAsync(detalle.ProductId);
+                        productosCorreo.Add((
+                            nombreProducto: product?.Name ?? "Producto",
+                            cantidad: detalle.Quantity,
+                            precio: detalle.UnitPrice
+                        ));
+                    }
+
+                    _emailService.EnviarCorreoConfirmacionCompra(
+                        venta.CustomerEmail,
+                        venta.ExternalReference,
+                        productosCorreo,
+                        venta.Total
+                    );
+
+                    _logger.LogInformation("Correo de confirmación enviado a {Email}", venta.CustomerEmail);
+                }
+
                 // 3️⃣ Asociar ExternalReference a MercadoPago
                 dto.ExternalReference = venta.ExternalReference;
 
@@ -100,6 +123,8 @@ namespace Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+
 
 
         [HttpPost("webhook")]
