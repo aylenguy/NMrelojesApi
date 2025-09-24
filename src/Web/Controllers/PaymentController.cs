@@ -45,32 +45,57 @@ namespace Web.Controllers
             var paymentResult = await _paymentService.CreatePaymentAsync(dto);
             return Ok(paymentResult);
         }
-
         [HttpPost("create-checkout")]
         public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequestDto dto)
         {
             try
             {
-                // Crear la venta en la base con estado Pendiente
+                if (dto.Items == null || !dto.Items.Any())
+                    return BadRequest(new { error = "No se enviaron productos." });
+
+                var detalleVentas = new List<DetalleVenta>();
+                decimal totalVenta = 0;
+
+                // 🔹 Validar productos y calcular subtotal
+                foreach (var item in dto.Items)
+                {
+                    var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    if (product == null)
+                        return BadRequest(new { error = $"Producto con Id {item.ProductId} no existe" });
+
+                    if (product.Stock < item.Quantity)
+                        return BadRequest(new { error = $"Stock insuficiente para el producto {product.Name}" });
+
+                    var subtotal = product.Price * item.Quantity;
+                    detalleVentas.Add(new DetalleVenta
+                    {
+                        ProductId = product.Id,
+                        Quantity = item.Quantity,
+                        UnitPrice = product.Price,
+                        Subtotal = subtotal
+                    });
+
+                    totalVenta += subtotal;
+
+                    // 🔹 Descontar stock inmediatamente
+                    product.Stock -= item.Quantity;
+                    await _productRepository.UpdateAsync(product);
+                }
+
+                // 🔹 Crear la venta
                 var venta = new Venta
                 {
                     Date = DateTime.UtcNow,
                     Status = VentaStatus.Pendiente,
                     ExternalReference = Guid.NewGuid().ToString(),
                     CustomerEmail = dto.PayerEmail ?? string.Empty,
-                    DetalleVentas = dto.Items.Select(i => new DetalleVenta
-                    {
-                        ProductId = i.ProductId,
-                        Quantity = i.Quantity,
-                        UnitPrice = i.UnitPrice,
-                        Subtotal = i.UnitPrice * i.Quantity
-                    }).ToList()
+                    DetalleVentas = detalleVentas,
+                    Total = totalVenta
                 };
 
-                venta.Total = venta.DetalleVentas.Sum(d => d.Subtotal);
                 await _ventaRepository.AddAsync(venta);
 
-                // Asociar ese ExternalReference a MercadoPago
+                // 🔹 Crear preferencia de Mercado Pago
                 dto.ExternalReference = venta.ExternalReference;
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
 
@@ -90,11 +115,10 @@ namespace Web.Controllers
         public async Task<IActionResult> Webhook([FromBody] JsonElement notification, [FromServices] IConfiguration configuration)
         {
             if (notification.ValueKind == JsonValueKind.Undefined || notification.ValueKind == JsonValueKind.Null)
-                return Ok(); // 👈 devolvemos 200 igual, para que MP no siga reintentando
+                return Ok(); // MP siempre recibe 200 para no reintentar
 
             try
             {
-                // 🔹 Verificar que las variables de entorno estén cargadas
                 var webhookSecret = configuration["MercadoPago:WebhookSecret"];
                 _logger.LogInformation("AccessToken cargado: {AccessTokenLoaded}",
                     string.IsNullOrEmpty(_accessToken) ? "NO CARGADO" : "CARGADO");
@@ -114,7 +138,7 @@ namespace Web.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error al leer la notificación de MP: {Notification}", notification.ToString());
-                    return Ok(); // 👈 devolvemos 200 aunque no pudimos procesar
+                    return Ok(); // devolvemos 200 aunque no se pueda procesar
                 }
 
                 if (type == "payment" && !string.IsNullOrEmpty(id))
@@ -134,32 +158,23 @@ namespace Web.Controllers
                     if (paymentInfo == null)
                     {
                         _logger.LogWarning("No se pudo deserializar paymentInfo");
-                        return Ok(); // 👈 devolvemos 200 igual
+                        return Ok(); // devolvemos 200 igual
                     }
 
                     var venta = await _ventaRepository.GetByExternalReferenceAsync(paymentInfo.ExternalReference);
 
                     if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
                     {
-                        venta.Status = VentaStatus.Pagado; // 👈 mejor Pagado, no Enviado
+                        // 🔹 Solo actualizar estado y datos de pago
+                        venta.Status = VentaStatus.Pagado;
                         venta.PaymentId = paymentInfo.Id.ToString();
                         venta.PaymentStatus = paymentInfo.Status;
                         venta.StatusDetail = paymentInfo.StatusDetail;
                         venta.TransactionAmount = paymentInfo.TransactionAmount;
 
-                        foreach (var detalle in venta.DetalleVentas)
-                        {
-                            var product = await _productRepository.GetByIdAsync(detalle.ProductId);
-                            if (product != null)
-                            {
-                                product.Stock -= detalle.Quantity;
-                                await _productRepository.UpdateAsync(product);
-                            }
-                        }
-
                         await _ventaRepository.UpdateAsync(venta);
 
-                        // Enviar correo de confirmación de compra
+                        // 🔹 Enviar correo de confirmación
                         var productos = venta.DetalleVentas
                             .Select(d => (d.Product.Name, d.Quantity, d.UnitPrice))
                             .ToList();
@@ -184,9 +199,10 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error procesando webhook de Mercado Pago");
-                return Ok(); // 👈 devolvemos 200 igual para que MP no reintente infinito
+                return Ok(); // devolvemos 200 para que MP no reintente infinito
             }
         }
+
 
     }
 }
