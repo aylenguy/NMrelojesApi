@@ -46,45 +46,48 @@ namespace Web.Controllers
             var paymentResult = await _paymentService.CreatePaymentAsync(dto);
             return Ok(paymentResult);
         }
+
         [HttpPost("create-checkout")]
         public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequestDto dto)
         {
             try
             {
-                // ✅ 1. Validar que todos los productos existan
-                // foreach (var item in dto.Items)
-                //{
-                //  var product = await _productRepository.GetByIdAsync(item.ProductId);
-                //if (product == null)
-                //{
-                //  return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
-                //}
-                //}
+                // 1️⃣ Validar que todos los productos existan
+                foreach (var item in dto.Items)
+                {
+                    var product = await _productRepository.GetByIdAsync(item.ProductId);
+                    if (product == null)
+                    {
+                        return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
+                    }
+                }
 
-                // ✅ 2. Crear la venta en estado Pendiente
-                //   var venta = new Venta
-                // {
-                //   Date = DateTime.UtcNow,
-                // Status = VentaStatus.Pendiente,
-                //  ExternalReference = Guid.NewGuid().ToString(),
-                //  CustomerEmail = dto.PayerEmail ?? string.Empty,
-                //  DetalleVentas = dto.Items.Select(i => new DetalleVenta
-                // {
-                //  ProductId = i.ProductId,
-                //   Quantity = i.Quantity,
-                //  UnitPrice = i.UnitPrice,
-                //  Subtotal = i.UnitPrice * i.Quantity
-                // }).ToList()
-                //};
+                // 2️⃣ Crear la venta en estado Pendiente
+                var venta = new Venta
+                {
+                    Date = DateTime.UtcNow,
+                    Status = VentaStatus.Pendiente,
+                    ExternalReference = Guid.NewGuid().ToString(),
+                    CustomerEmail = dto.PayerEmail ?? string.Empty,
+                    DetalleVentas = dto.Items.Select(i => new DetalleVenta
+                    {
+                        ProductId = i.ProductId,
+                        Quantity = i.Quantity,
+                        UnitPrice = i.UnitPrice,
+                        Subtotal = i.UnitPrice * i.Quantity
+                    }).ToList()
+                };
 
-                //venta.Total = venta.DetalleVentas.Sum(d => d.Subtotal);
+                venta.Total = venta.DetalleVentas.Sum(d => d.Subtotal);
 
-                // await _ventaRepository.AddAsync(venta);
+                await _ventaRepository.AddAsync(venta);
+                _logger.LogInformation("Venta creada con Id {VentaId} y ExternalReference {ExternalReference}",
+                                        venta.Id, venta.ExternalReference);
 
-                // ✅ 3. Asociar externalReference a MercadoPago
-                //  dto.ExternalReference = venta.ExternalReference;
+                // 3️⃣ Asociar ExternalReference a MercadoPago
+                dto.ExternalReference = venta.ExternalReference;
 
-
+                // 4️⃣ Crear preferencia en MercadoPago
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
                 if (preference == null)
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
@@ -97,8 +100,6 @@ namespace Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
-
 
 
         [HttpPost("webhook")]

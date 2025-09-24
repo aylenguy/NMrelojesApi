@@ -11,7 +11,7 @@ public interface IVentaRepository : IRepositoryBase<Venta>
     Task<Venta?> GetByExternalReferenceAsync(string externalReference);
     Task UpdateAsync(Venta venta);
 
-   // Task AddAsync(Venta venta);   // 👈 agregar esto
+    Task AddAsync(Venta venta);   // 👈 agregar esto
     Venta GetById(int id);
 
     Task<Venta> GetByIdWithDetailsAsync(int id);
