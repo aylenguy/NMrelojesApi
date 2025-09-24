@@ -2,7 +2,7 @@
 using Application.Interfaces;
 using Application.Model;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+
 
 namespace Web.Controllers
 {
