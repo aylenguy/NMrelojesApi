@@ -19,7 +19,7 @@ namespace Web.Controllers
         private readonly IVentaRepository _ventaRepository;
         private readonly IProductRepository _productRepository;
         private readonly string _accessToken;
-        private readonly EmailService _emailService;            
+       // private readonly EmailService _emailService;            
 
         public PaymentController(
             IPaymentService paymentService,
@@ -27,8 +27,8 @@ namespace Web.Controllers
             ILogger<PaymentController> logger,
             IConfiguration configuration,
             IVentaRepository ventaRepository,
-            IProductRepository productRepository,
-            EmailService emailService
+            IProductRepository productRepository
+          //  EmailService emailService
         )
         {
             _paymentService = paymentService;
@@ -37,7 +37,7 @@ namespace Web.Controllers
             _accessToken = configuration["MercadoPago:AccessToken"];
             _ventaRepository = ventaRepository;
             _productRepository = productRepository;
-            _emailService = emailService;
+           // _emailService = emailService;
         }
 
         [HttpPost("create-payment")]
@@ -52,37 +52,38 @@ namespace Web.Controllers
             try
             {
                 // ✅ 1. Validar que todos los productos existan
-               // foreach (var item in dto.Items)
+                // foreach (var item in dto.Items)
                 //{
-                  //  var product = await _productRepository.GetByIdAsync(item.ProductId);
-                    //if (product == null)
-                    //{
-                      //  return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
-                    //}
+                //  var product = await _productRepository.GetByIdAsync(item.ProductId);
+                //if (product == null)
+                //{
+                //  return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
+                //}
                 //}
 
                 // ✅ 2. Crear la venta en estado Pendiente
-                var venta = new Venta
-                {
-                    Date = DateTime.UtcNow,
-                    Status = VentaStatus.Pendiente,
-                    ExternalReference = Guid.NewGuid().ToString(),
-                    CustomerEmail = dto.PayerEmail ?? string.Empty,
-                    DetalleVentas = dto.Items.Select(i => new DetalleVenta
-                    {
-                      //  ProductId = i.ProductId,
-                        Quantity = i.Quantity,
-                        UnitPrice = i.UnitPrice,
-                        Subtotal = i.UnitPrice * i.Quantity
-                    }).ToList()
-                };
+                //   var venta = new Venta
+                // {
+                //   Date = DateTime.UtcNow,
+                // Status = VentaStatus.Pendiente,
+                //  ExternalReference = Guid.NewGuid().ToString(),
+                //  CustomerEmail = dto.PayerEmail ?? string.Empty,
+                //  DetalleVentas = dto.Items.Select(i => new DetalleVenta
+                // {
+                //  ProductId = i.ProductId,
+                //   Quantity = i.Quantity,
+                //  UnitPrice = i.UnitPrice,
+                //  Subtotal = i.UnitPrice * i.Quantity
+                // }).ToList()
+                //};
 
-                venta.Total = venta.DetalleVentas.Sum(d => d.Subtotal);
+                //venta.Total = venta.DetalleVentas.Sum(d => d.Subtotal);
 
-                await _ventaRepository.AddAsync(venta);
+                // await _ventaRepository.AddAsync(venta);
 
                 // ✅ 3. Asociar externalReference a MercadoPago
-                dto.ExternalReference = venta.ExternalReference;
+                //  dto.ExternalReference = venta.ExternalReference;
+
 
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
                 if (preference == null)
@@ -140,13 +141,13 @@ namespace Web.Controllers
 
                     var venta = await _ventaRepository.GetByExternalReferenceAsync(paymentInfo.ExternalReference);
 
-                    if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
-                    {
+                  
+                    
+
+                        if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
+                        {
                         venta.Status = VentaStatus.Enviado; // o Pagado
-                        venta.PaymentId = paymentInfo.Id.ToString();
-                        venta.PaymentStatus = paymentInfo.Status;
-                        venta.StatusDetail = paymentInfo.StatusDetail;
-                        venta.TransactionAmount = paymentInfo.TransactionAmount;
+                     
 
                         foreach (var detalle in venta.DetalleVentas)
                         {
@@ -159,21 +160,13 @@ namespace Web.Controllers
                         }
 
                         await _ventaRepository.UpdateAsync(venta);
+                        _logger.LogInformation("Venta actualizada a Enviado: {VentaId}", venta.Id);
 
-                        // ✅ Enviar correo de confirmación de compra
-                        var productos = venta.DetalleVentas
-                            .Select(d => (d.Product.Name, d.Quantity, d.UnitPrice))
-                            .ToList();
+                     
+                      
 
-                        _emailService.EnviarCorreoConfirmacionCompra(
-                            venta.CustomerEmail,
-                            venta.Id.ToString(),
-                            productos,
-                            venta.Total
-                        );
-
-                        _logger.LogInformation("Venta {VentaId} confirmada y correo enviado", venta.Id);
-                    }
+                  
+                        }
 
                 }
 
