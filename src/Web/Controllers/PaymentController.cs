@@ -112,18 +112,25 @@ namespace Web.Controllers
             {
                 _logger.LogInformation("Webhook recibido: {Notification}", notification.ToString());
 
+                // 🔹 Intentamos obtener 'type' y 'data.id' de manera segura
                 if (!notification.TryGetProperty("type", out var typeProp) ||
                     !notification.TryGetProperty("data", out var dataProp) ||
                     !dataProp.TryGetProperty("id", out var idProp))
                 {
-                    _logger.LogWarning("Notificación inválida: {Notification}", notification.ToString());
-                    return BadRequest();
+                    _logger.LogWarning("Notificación inválida o incompleta: {Notification}", notification.ToString());
+                    return Ok(); // Devolvemos OK para no generar reintentos
                 }
 
-                var type = typeProp.GetString();
-                var id = idProp.GetString();
+                string? type = typeProp.GetString();
+                string? id = idProp.GetString();
 
-                if (type == "payment" && !string.IsNullOrEmpty(id))
+                if (string.IsNullOrEmpty(type) || string.IsNullOrEmpty(id))
+                {
+                    _logger.LogWarning("Notificación con valores nulos: {Notification}", notification.ToString());
+                    return Ok();
+                }
+
+                if (type == "payment")
                 {
                     var httpClient = _httpClientFactory.CreateClient();
                     var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.mercadopago.com/v1/payments/{id}");
@@ -134,41 +141,28 @@ namespace Web.Controllers
                     var json = await response.Content.ReadAsStringAsync();
                     var paymentInfo = JsonSerializer.Deserialize<MercadoPagoPaymentDto>(json);
 
-                    if (paymentInfo == null)
+                    if (paymentInfo != null)
                     {
-                        _logger.LogWarning("No se pudo deserializar paymentInfo");
-                        return BadRequest();
-                    }
-
-                    var venta = await _ventaRepository.GetByExternalReferenceAsync(paymentInfo.ExternalReference);
-
-                  
-                    
+                        var venta = await _ventaRepository.GetByExternalReferenceAsync(paymentInfo.ExternalReference);
 
                         if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
                         {
-                        venta.Status = VentaStatus.Enviado; // o Pagado
-                     
+                            venta.Status = VentaStatus.Enviado;
 
-                        foreach (var detalle in venta.DetalleVentas)
-                        {
-                            var product = await _productRepository.GetByIdAsync(detalle.ProductId);
-                            if (product != null)
+                            foreach (var detalle in venta.DetalleVentas)
                             {
-                                product.Stock -= detalle.Quantity;
-                                await _productRepository.UpdateAsync(product);
+                                var product = await _productRepository.GetByIdAsync(detalle.ProductId);
+                                if (product != null)
+                                {
+                                    product.Stock -= detalle.Quantity;
+                                    await _productRepository.UpdateAsync(product);
+                                }
                             }
+
+                            await _ventaRepository.UpdateAsync(venta);
+                            _logger.LogInformation("Venta actualizada a Enviado: {VentaId}", venta.Id);
                         }
-
-                        await _ventaRepository.UpdateAsync(venta);
-                        _logger.LogInformation("Venta actualizada a Enviado: {VentaId}", venta.Id);
-
-                     
-                      
-
-                  
-                        }
-
+                    }
                 }
 
                 return Ok();
@@ -179,5 +173,7 @@ namespace Web.Controllers
                 return StatusCode(500);
             }
         }
+
+
     }
 }
