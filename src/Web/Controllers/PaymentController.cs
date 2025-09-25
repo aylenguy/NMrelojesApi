@@ -107,40 +107,26 @@ namespace Web.Controllers
         }
 
         [HttpPost("webhook")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Webhook([FromBody] WebhookDto notification)
+        [AllowAnonymous] // el webhook de MercadoPago NO va a venir autenticado
+        public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
         {
             try
             {
-                _logger.LogInformation("📩 Webhook recibido: {Notification}", JsonSerializer.Serialize(notification));
+                _logger.LogInformation("📩 Webhook recibido: {Notification}", notification.ToString());
 
-                string paymentId = null;
-                string eventType = null;
-
-                if (HttpContext.Request.Query.ContainsKey("id"))
+                if (!notification.TryGetProperty("data", out var data) ||
+                    !notification.TryGetProperty("type", out var type))
                 {
-                    paymentId = HttpContext.Request.Query["id"].ToString();
-                    eventType = HttpContext.Request.Query["type"].ToString();
-                }
-                else
-                {
-                    paymentId = notification?.Data?.Id;
-                    eventType = notification?.Type;
-                }
-
-                if (string.IsNullOrEmpty(paymentId))
-                {
-                    _logger.LogError("❌ No se recibió id de pago en webhook");
                     return BadRequest();
                 }
 
-                if (eventType != "payment")
-                {
-                    _logger.LogInformation("ℹ️ Evento ignorado porque no es pago: {EventType}", eventType);
-                    return Ok();
-                }
+                var paymentId = data.GetProperty("id").GetString();
+                var eventType = type.GetString();
 
-                // 🔹 Consultar el pago en Mercado Pago
+                if (eventType != "payment")
+                    return Ok(); // ignorar otros eventos
+
+                // 1️⃣ Consultar el pago en MP
                 var client = _httpClientFactory.CreateClient();
                 client.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
@@ -161,6 +147,7 @@ namespace Web.Controllers
 
                 _logger.LogInformation("✅ Pago recibido. Status={Status}, ExternalRef={ExternalReference}", status, externalReference);
 
+                // 2️⃣ Buscar venta en tu servicio
                 var venta = await _ventaRepository.GetByExternalReferenceAsync(externalReference);
                 if (venta == null)
                 {
@@ -170,39 +157,44 @@ namespace Web.Controllers
 
                 if (status == "approved")
                 {
-                    _logger.LogInformation("💌 Pago aprobado. Se actualizará la venta, se descontará stock y se enviará el mail a {Email}", venta.CustomerEmail);
-
-                    venta.PaymentStatus = "approved";
-                    venta.Status = VentaStatus.Entregado; // o Enviado, según tu flujo
+                    // 3️⃣ Marcar la venta como aprobada
+                    venta.Status = VentaStatus.Aprobada;
                     await _ventaRepository.UpdateAsync(venta);
 
-                    // 🔹 Descontar stock
-                    foreach (var detalle in venta.DetalleVentas)
+                    // 4️⃣ Descontar stock
+                    foreach (var item in venta.DetalleVentas)
                     {
-                        var product = await _productRepository.GetByIdAsync(detalle.ProductId);
+                        var product = await _productRepository.GetByIdAsync(item.ProductId);
                         if (product != null)
                         {
-                            product.Stock -= detalle.Quantity;
+                            product.Stock -= item.Quantity;
                             await _productRepository.UpdateAsync(product);
                         }
                     }
 
-                    // 🔹 Preparar lista de productos para el correo
-                    var productos = venta.DetalleVentas
-                        .Select(d => (d.Product?.Name ?? $"Producto {d.ProductId}", d.Quantity, d.UnitPrice))
-                        .ToList();
+                    // 5️⃣ Enviar mail usando tu mismo servicio
+                    var ventaResponse = new VentaResponseDto
+                    {
+                        OrderId = venta.Id,
+                        CustomerEmail = venta.CustomerEmail,
+                        Items = venta.DetalleVentas.Select(d => new VentaItemResponseDto
+                        {
+                            ProductName = d.Product?.Name ?? "Producto",
+                            Quantity = d.Quantity,
+                            UnitPrice = d.UnitPrice
+                        }).ToList(),
+                        Total = venta.Total,
+                        ExternalReference = venta.ExternalReference
+                    };
 
-                    // 🔹 Enviar mail de confirmación de compra
                     _emailService.EnviarCorreoConfirmacionCompra(
-                        venta.CustomerEmail,
-                        venta.Id.ToString(),
-                        productos,
-                        venta.Total
+                        ventaResponse.CustomerEmail,
+                        ventaResponse.OrderId.ToString(),
+                        ventaResponse.Items.Select(i => (i.ProductName, i.Quantity, i.UnitPrice)).ToList(),
+                        ventaResponse.Total
                     );
-                }
-                else
-                {
-                    _logger.LogWarning("⚠️ Pago no aprobado. Status={Status}", status);
+
+                    _logger.LogInformation("🎉 Venta {VentaId} actualizada, stock descontado y mail enviado", venta.Id);
                 }
 
                 return Ok();
@@ -214,16 +206,7 @@ namespace Web.Controllers
             }
         }
 
-        public class WebhookDto
-        {
-            public string Type { get; set; }
-            public WebhookData Data { get; set; }
-        }
 
-        public class WebhookData
-        {
-            public string Id { get; set; }
-        }
 
     }
 }
