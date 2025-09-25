@@ -28,7 +28,7 @@ namespace Application.Services
                 Name = p.Name,
                 Price = p.Price,
                 OldPrice = p.OldPrice,
-                Image = p.Image,
+                Image = p.Images,
                 Description = p.Description,
                 Color = p.Color,
                 Specs = string.IsNullOrEmpty(p.Specs)
@@ -61,7 +61,7 @@ namespace Application.Services
                 Name = request.Name,
                 Price = request.Price,
                 OldPrice = request.OldPrice,
-                Image = imageFileName, // ahora sí existe
+                Images = imageFileName, // ahora sí existe
                 Description = request.Description,
                 Color = request.Color,
                 Specs = string.Join(",", request.Caracteristicas),
