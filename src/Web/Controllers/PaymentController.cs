@@ -46,6 +46,7 @@ namespace Web.Controllers
             var paymentResult = await _paymentService.CreatePaymentAsync(dto);
             return Ok(paymentResult);
         }
+
         [HttpPost("create-checkout")]
         public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequestDto dto)
         {
@@ -86,65 +87,47 @@ namespace Web.Controllers
                 // 3️⃣ Asociar ExternalReference a MercadoPago
                 dto.ExternalReference = externalReference;
 
-                // 4️⃣ Crear preferencia en MercadoPago (devuelve tu DTO)
-                var checkoutResponse = await _paymentService.CreateCheckoutPreferenceAsync(dto);
-                if (checkoutResponse == null || string.IsNullOrEmpty(checkoutResponse.InitPoint))
+                // 4️⃣ Crear preferencia en MercadoPago
+                var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
+                if (preference == null)
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
-                // 🔹 5️⃣ Devolver solo lo que el front necesita
-                return Ok(new CheckoutResponseDto
+                // 🔹 5️⃣ Devolver preferencia + externalReference al front
+                return Ok(new
                 {
-                    Id = checkoutResponse.Id,
-                    InitPoint = checkoutResponse.InitPoint,
-                    SandboxInitPoint = checkoutResponse.SandboxInitPoint,
-                    ExternalReference = externalReference
+                    preference,
+                    externalReference
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error en create-checkout");
-                return StatusCode(500, new { error = ex.Message });
+                return StatusCode(500, ex.Message);
             }
         }
 
-
         [HttpPost("webhook")]
-        public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
+        public async Task<IActionResult> Webhook([FromBody] MercadoPagoWebhookDto notification)
         {
-            if (notification.ValueKind == JsonValueKind.Undefined || notification.ValueKind == JsonValueKind.Null)
-                return BadRequest();
+            if (notification == null || string.IsNullOrEmpty(notification.Type) || string.IsNullOrEmpty(notification.Data?.Id))
+            {
+                _logger.LogWarning("Webhook recibido inválido");
+                return Ok(); // siempre respondemos 200 para que MP no reintente infinitamente
+            }
 
             try
             {
-                _logger.LogInformation("Webhook recibido: {Notification}", notification.ToString());
+                _logger.LogInformation("Webhook recibido: {Notification}", JsonSerializer.Serialize(notification));
 
-                // 🔹 Intentamos obtener 'type' y 'data.id' de manera segura
-                if (!notification.TryGetProperty("type", out var typeProp) ||
-                    !notification.TryGetProperty("data", out var dataProp) ||
-                    !dataProp.TryGetProperty("id", out var idProp))
-                {
-                    _logger.LogWarning("Notificación inválida o incompleta: {Notification}", notification.ToString());
-                    return Ok(); // Devolvemos OK para no generar reintentos
-                }
-
-                string? type = typeProp.GetString();
-                string? id = idProp.GetString();
-
-                if (string.IsNullOrEmpty(type) || string.IsNullOrEmpty(id))
-                {
-                    _logger.LogWarning("Notificación con valores nulos: {Notification}", notification.ToString());
-                    return Ok();
-                }
-
-                if (type == "payment")
+                if (notification.Type == "payment")
                 {
                     var httpClient = _httpClientFactory.CreateClient();
-                    var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.mercadopago.com/v1/payments/{id}");
-                    request.Headers.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
+                    var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.mercadopago.com/v1/payments/{notification.Data.Id}");
+                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
 
                     var response = await httpClient.SendAsync(request);
                     var json = await response.Content.ReadAsStringAsync();
+
                     var paymentInfo = JsonSerializer.Deserialize<MercadoPagoPaymentDto>(json);
 
                     if (paymentInfo != null)
@@ -153,7 +136,6 @@ namespace Web.Controllers
 
                         if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
                         {
-                            // 🔹 Actualizar estado de venta
                             venta.Status = VentaStatus.Pagado;
 
                             foreach (var detalle in venta.DetalleVentas)
@@ -167,12 +149,14 @@ namespace Web.Controllers
                             }
 
                             await _ventaRepository.UpdateAsync(venta);
-                            _logger.LogInformation("Venta actualizada a Enviado: {VentaId}", venta.Id);
 
-                            // 🔹 Enviar correo de confirmación de compra
+                            _logger.LogInformation("Venta {VentaId} actualizada a Pagada", venta.Id);
+
+                            // Enviar correo
                             if (!string.IsNullOrEmpty(venta.CustomerEmail))
                             {
                                 var productosCorreo = new List<(string nombreProducto, int cantidad, decimal precio)>();
+
                                 foreach (var detalle in venta.DetalleVentas)
                                 {
                                     var product = await _productRepository.GetByIdAsync(detalle.ProductId);
@@ -205,6 +189,16 @@ namespace Web.Controllers
             }
         }
 
+        public class MercadoPagoWebhookDto
+        {
+            public string Type { get; set; } = string.Empty;
+            public MercadoPagoWebhookData Data { get; set; } = new();
+        }
+
+        public class MercadoPagoWebhookData
+        {
+            public string Id { get; set; } = string.Empty;
+        }
 
 
     }

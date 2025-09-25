@@ -18,6 +18,8 @@ public class PaymentServiceSandbox : IPaymentService
         MercadoPagoConfig.AccessToken = _accessToken;
     }
 
+
+
     public async Task<CheckoutResponseDto> CreateCheckoutPreferenceAsync(CheckoutRequestDto dto)
     {
         try
