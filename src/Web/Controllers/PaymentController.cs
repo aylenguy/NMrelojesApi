@@ -113,15 +113,24 @@ namespace Web.Controllers
             {
                 _logger.LogInformation("📩 Webhook recibido: {Notification}", notification.ToString());
 
-                if (!notification.TryGetProperty("data", out var data) ||
-                    !notification.TryGetProperty("type", out var type))
+                // 🔍 Validar estructura flexible del webhook
+                if (!notification.TryGetProperty("type", out var typeProp) &&
+                    !notification.TryGetProperty("topic", out typeProp))
                 {
-                    _logger.LogWarning("⚠️ Webhook sin 'data' o 'type'");
-                    return BadRequest("Faltan campos requeridos");
+                    _logger.LogWarning("⚠️ Webhook sin 'type' ni 'topic'");
+                    return BadRequest("Falta 'type' o 'topic'");
                 }
 
-                var paymentId = data.GetProperty("id").GetString();
-                var eventType = type.GetString();
+                var eventType = typeProp.GetString();
+
+                if (!notification.TryGetProperty("data", out var dataProp) ||
+                    !dataProp.TryGetProperty("id", out var idProp))
+                {
+                    _logger.LogWarning("⚠️ Webhook sin 'data.id'");
+                    return BadRequest("Falta 'data.id'");
+                }
+
+                var paymentId = idProp.GetString();
 
                 if (string.IsNullOrEmpty(paymentId))
                 {
@@ -234,7 +243,6 @@ namespace Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
 
     }
 }
