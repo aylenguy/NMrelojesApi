@@ -93,11 +93,14 @@ namespace Web.Controllers
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
                 // 🔹 5️⃣ Devolver preferencia + externalReference al front
+                // 🔹 5️⃣ Devolver preferencia + externalReference al front
                 return Ok(new
                 {
-                    preference,
+                    initPoint = preference.InitPoint,
+                    sandboxInitPoint = preference.SandboxInitPoint,
                     externalReference
                 });
+
             }
             catch (Exception ex)
             {
