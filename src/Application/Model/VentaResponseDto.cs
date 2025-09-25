@@ -42,7 +42,8 @@ public class VentaResponseDto
     public string SandboxInitPoint { get; set; } = string.Empty;
 
     // Items
-    public List<VentaItemDto> Items { get; set; } = new();
+
+    public List<VentaItemResponseDto> Items { get; set; } = new();
 }
 
 

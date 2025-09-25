@@ -5,6 +5,7 @@ using Application.Model.Request;
 using Application.Model;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Web.Controllers
@@ -110,97 +111,110 @@ namespace Web.Controllers
         }
 
         [HttpPost("webhook")]
-        public async Task<IActionResult> Webhook([FromBody] MercadoPagoWebhookDto notification)
+        [AllowAnonymous] // el webhook de MercadoPago NO va a venir autenticado
+        public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
         {
-            if (notification == null || string.IsNullOrEmpty(notification.Type) || string.IsNullOrEmpty(notification.Data?.Id))
-            {
-                _logger.LogWarning("Webhook recibido inválido");
-                return Ok(); // siempre respondemos 200 para que MP no reintente infinitamente
-            }
-
             try
             {
-                _logger.LogInformation("Webhook recibido: {Notification}", JsonSerializer.Serialize(notification));
+                _logger.LogInformation("📩 Webhook recibido: {Notification}", notification.ToString());
 
-                if (notification.Type == "payment")
+                if (!notification.TryGetProperty("data", out var data) ||
+                    !notification.TryGetProperty("type", out var type))
                 {
-                    var httpClient = _httpClientFactory.CreateClient();
-                    var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.mercadopago.com/v1/payments/{notification.Data.Id}");
-                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
+                    return BadRequest();
+                }
 
-                    var response = await httpClient.SendAsync(request);
-                    var json = await response.Content.ReadAsStringAsync();
+                var paymentId = data.GetProperty("id").GetString();
+                var eventType = type.GetString();
 
-                    var paymentInfo = JsonSerializer.Deserialize<MercadoPagoPaymentDto>(json);
+                if (eventType != "payment")
+                    return Ok(); // ignorar otros eventos que no sean pago
 
-                    if (paymentInfo != null)
+                // 1️⃣ Consultar el pago en MP
+                var client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
+
+                var response = await client.GetAsync($"https://api.mercadopago.com/v1/payments/{paymentId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("❌ Error al consultar pago en MP: {Status}", response.StatusCode);
+                    return StatusCode(500);
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                var status = root.GetProperty("status").GetString();
+                var externalReference = root.GetProperty("external_reference").GetString();
+
+                _logger.LogInformation("✅ Pago recibido. Status={Status}, ExternalRef={ExternalReference}", status, externalReference);
+
+                // 2️⃣ Buscar venta en tu servicio
+                var venta = await _ventaRepository.GetByExternalReferenceAsync(externalReference);
+                if (venta == null)
+                {
+                    _logger.LogError("❌ No se encontró venta con referencia {ExternalReference}", externalReference);
+                    return NotFound();
+                }
+
+                if (status == "approved")
+                {
+                    // 3️⃣ Marcar la venta como aprobada
+                    venta.Status = VentaStatus.Pagado;
+                    await _ventaRepository.UpdateAsync(venta);
+
+                    // 4️⃣ Descontar stock (y cargar Product en cada detalle)
+                    foreach (var item in venta.DetalleVentas)
                     {
-                        var venta = await _ventaRepository.GetByExternalReferenceAsync(paymentInfo.ExternalReference);
-
-                        if (venta != null && paymentInfo.Status == "approved" && venta.Status == VentaStatus.Pendiente)
+                        var product = await _productRepository.GetByIdAsync(item.ProductId);
+                        if (product != null)
                         {
-                            venta.Status = VentaStatus.Pagado;
+                            product.Stock -= item.Quantity;
+                            await _productRepository.UpdateAsync(product);
 
-                            foreach (var detalle in venta.DetalleVentas)
-                            {
-                                var product = await _productRepository.GetByIdAsync(detalle.ProductId);
-                                if (product != null)
-                                {
-                                    product.Stock -= detalle.Quantity;
-                                    await _productRepository.UpdateAsync(product);
-                                }
-                            }
-
-                            await _ventaRepository.UpdateAsync(venta);
-
-                            _logger.LogInformation("Venta {VentaId} actualizada a Pagada", venta.Id);
-
-                            // Enviar correo
-                            if (!string.IsNullOrEmpty(venta.CustomerEmail))
-                            {
-                                var productosCorreo = new List<(string nombreProducto, int cantidad, decimal precio)>();
-
-                                foreach (var detalle in venta.DetalleVentas)
-                                {
-                                    var product = await _productRepository.GetByIdAsync(detalle.ProductId);
-                                    productosCorreo.Add((
-                                        nombreProducto: product?.Name ?? "Producto",
-                                        cantidad: detalle.Quantity,
-                                        precio: detalle.UnitPrice
-                                    ));
-                                }
-
-                                _emailService.EnviarCorreoConfirmacionCompra(
-                                    venta.CustomerEmail,
-                                    venta.ExternalReference,
-                                    productosCorreo,
-                                    venta.Total
-                                );
-
-                                _logger.LogInformation("Correo de confirmación enviado a {Email}", venta.CustomerEmail);
-                            }
+                            // asegurar que el objeto esté cargado
+                            item.Product = product;
                         }
                     }
+
+                    // 5️⃣ Mapear a DTO para el correo
+                    var ventaResponse = new VentaResponseDto
+                    {
+                        OrderId = venta.Id,
+                        CustomerEmail = venta.CustomerEmail,
+                        Items = venta.DetalleVentas.Select(d => new VentaItemResponseDto
+                        {
+                            ProductId = d.ProductId,
+                            ProductName = d.Product?.Name ?? "Producto",
+                            Quantity = d.Quantity,
+                            UnitPrice = d.UnitPrice,
+                            Subtotal = d.Subtotal,
+                            CurrentStock = d.Product?.Stock ?? 0
+                        }).ToList(),
+                        Total = venta.Total,
+                        ExternalReference = venta.ExternalReference
+                    };
+
+                    // 6️⃣ Enviar mail
+                    _emailService.EnviarCorreoConfirmacionCompra(
+                        ventaResponse.CustomerEmail,
+                        ventaResponse.OrderId.ToString(),
+                        ventaResponse.Items.Select(i => (i.ProductName, i.Quantity, i.UnitPrice)).ToList(),
+                        ventaResponse.Total
+                    );
+
+                    _logger.LogInformation("🎉 Venta {VentaId} actualizada, stock descontado y mail enviado", venta.Id);
                 }
 
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error procesando webhook de Mercado Pago");
-                return StatusCode(500);
+                _logger.LogError(ex, "❌ Error en webhook");
+                return StatusCode(500, ex.Message);
             }
-        }
-
-        public class MercadoPagoWebhookDto
-        {
-            public string Type { get; set; } = string.Empty;
-            public MercadoPagoWebhookData Data { get; set; } = new();
-        }
-
-        public class MercadoPagoWebhookData
-        {
-            public string Id { get; set; } = string.Empty;
         }
 
 

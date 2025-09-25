@@ -113,7 +113,7 @@ namespace Application.Services
                 CouponDiscount = couponDiscount,
                 TotalConDescuento = totalConDescuento,
                 ExternalReference = v.ExternalReference ?? string.Empty,
-                Items = v.DetalleVentas.Select(d => new VentaItemDto
+                Items = v.DetalleVentas.Select(d => new VentaItemResponseDto
                 {
                     ProductId = d.ProductId,
                     ProductName = d.Product?.Name ?? string.Empty,
@@ -448,7 +448,7 @@ namespace Application.Services
                 Total = ventaGuardada.Total,
                 InitPoint = checkoutResponse.InitPoint,
                 SandboxInitPoint = checkoutResponse.SandboxInitPoint,
-                Items = ventaGuardada.DetalleVentas.Select(dv => new VentaItemDto
+                Items = ventaGuardada.DetalleVentas.Select(dv => new VentaItemResponseDto
                 {
                     ProductId = dv.ProductId,
                     Quantity = dv.Quantity,
