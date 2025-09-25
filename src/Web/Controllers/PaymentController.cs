@@ -2,11 +2,9 @@
 using System.Text.Json;
 using Application.Interfaces;
 using Application.Model.Request;
-using Application.Model;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-
 
 namespace Web.Controllers
 {
@@ -20,7 +18,7 @@ namespace Web.Controllers
         private readonly IVentaRepository _ventaRepository;
         private readonly IProductRepository _productRepository;
         private readonly string _accessToken;
-        private readonly EmailService _emailService;            
+        private readonly EmailService _emailService;
 
         public PaymentController(
             IPaymentService paymentService,
@@ -93,8 +91,6 @@ namespace Web.Controllers
                 if (preference == null)
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
-                // 🔹 5️⃣ Devolver preferencia + externalReference al front
-                // 🔹 5️⃣ Devolver preferencia + externalReference al front
                 return Ok(new
                 {
                     initPoint = preference.InitPoint,
@@ -112,13 +108,12 @@ namespace Web.Controllers
 
         [HttpPost("webhook")]
         [AllowAnonymous]
-        public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
+        public async Task<IActionResult> Webhook([FromBody] WebhookDto notification)
         {
             try
             {
-                _logger.LogInformation("📩 Webhook recibido: {Notification}", notification.ToString());
+                _logger.LogInformation("📩 Webhook recibido: {Notification}", JsonSerializer.Serialize(notification));
 
-                // 👇 Capturamos el id de pago desde query o body
                 string paymentId = null;
                 string eventType = null;
 
@@ -129,10 +124,8 @@ namespace Web.Controllers
                 }
                 else
                 {
-                    if (notification.TryGetProperty("data", out var data))
-                        paymentId = data.GetProperty("id").GetString();
-                    if (notification.TryGetProperty("type", out var type))
-                        eventType = type.GetString();
+                    paymentId = notification?.Data?.Id;
+                    eventType = notification?.Type;
                 }
 
                 if (string.IsNullOrEmpty(paymentId))
@@ -142,9 +135,12 @@ namespace Web.Controllers
                 }
 
                 if (eventType != "payment")
-                    return Ok(); // ignorar si no es pago
+                {
+                    _logger.LogInformation("ℹ️ Evento ignorado porque no es pago: {EventType}", eventType);
+                    return Ok();
+                }
 
-                // 🔹 Consultar el pago en MP
+                // 🔹 Consultar el pago en Mercado Pago
                 var client = _httpClientFactory.CreateClient();
                 client.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
@@ -174,7 +170,39 @@ namespace Web.Controllers
 
                 if (status == "approved")
                 {
-                    // actualizar venta, stock y mandar mail (igual que ya tenés)
+                    _logger.LogInformation("💌 Pago aprobado. Se actualizará la venta, se descontará stock y se enviará el mail a {Email}", venta.CustomerEmail);
+
+                    venta.PaymentStatus = "approved";
+                    venta.Status = VentaStatus.Entregado; // o Enviado, según tu flujo
+                    await _ventaRepository.UpdateAsync(venta);
+
+                    // 🔹 Descontar stock
+                    foreach (var detalle in venta.DetalleVentas)
+                    {
+                        var product = await _productRepository.GetByIdAsync(detalle.ProductId);
+                        if (product != null)
+                        {
+                            product.Stock -= detalle.Quantity;
+                            await _productRepository.UpdateAsync(product);
+                        }
+                    }
+
+                    // 🔹 Preparar lista de productos para el correo
+                    var productos = venta.DetalleVentas
+                        .Select(d => (d.Product?.Name ?? $"Producto {d.ProductId}", d.Quantity, d.UnitPrice))
+                        .ToList();
+
+                    // 🔹 Enviar mail de confirmación de compra
+                    _emailService.EnviarCorreoConfirmacionCompra(
+                        venta.CustomerEmail,
+                        venta.Id.ToString(),
+                        productos,
+                        venta.Total
+                    );
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ Pago no aprobado. Status={Status}", status);
                 }
 
                 return Ok();
@@ -186,7 +214,16 @@ namespace Web.Controllers
             }
         }
 
+        public class WebhookDto
+        {
+            public string Type { get; set; }
+            public WebhookData Data { get; set; }
+        }
 
+        public class WebhookData
+        {
+            public string Id { get; set; }
+        }
 
     }
 }
