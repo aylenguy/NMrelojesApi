@@ -8,14 +8,9 @@ namespace Application.Model.Request
 {
     public class CheckoutResponseDto
     {
-        public string? PreferenceId { get; set; }
-        public string? InitPoint { get; set; } // link para redirigir
-
-        public string Id { get; set; } = string.Empty;   // preference.Id
-
-        public string? SandboxInitPoint { get; set; }
-
-
-
+        public string Id { get; set; } = string.Empty;             // preference.Id de MercadoPago
+        public string? InitPoint { get; set; }                     // link para redirigir al checkout
+        public string? SandboxInitPoint { get; set; }             // link sandbox (opcional)
+        public string ExternalReference { get; set; } = string.Empty; // tu externalReference de la venta
     }
 }

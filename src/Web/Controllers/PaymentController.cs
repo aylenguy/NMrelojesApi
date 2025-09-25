@@ -46,7 +46,6 @@ namespace Web.Controllers
             var paymentResult = await _paymentService.CreatePaymentAsync(dto);
             return Ok(paymentResult);
         }
-
         [HttpPost("create-checkout")]
         public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequestDto dto)
         {
@@ -87,24 +86,27 @@ namespace Web.Controllers
                 // 3️⃣ Asociar ExternalReference a MercadoPago
                 dto.ExternalReference = externalReference;
 
-                // 4️⃣ Crear preferencia en MercadoPago
-                var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
-                if (preference == null)
+                // 4️⃣ Crear preferencia en MercadoPago (devuelve tu DTO)
+                var checkoutResponse = await _paymentService.CreateCheckoutPreferenceAsync(dto);
+                if (checkoutResponse == null || string.IsNullOrEmpty(checkoutResponse.InitPoint))
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
-                // 🔹 5️⃣ Devolver preferencia + externalReference al front
-                return Ok(new
+                // 🔹 5️⃣ Devolver solo lo que el front necesita
+                return Ok(new CheckoutResponseDto
                 {
-                    preference,
-                    externalReference
+                    Id = checkoutResponse.Id,
+                    InitPoint = checkoutResponse.InitPoint,
+                    SandboxInitPoint = checkoutResponse.SandboxInitPoint,
+                    ExternalReference = externalReference
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error en create-checkout");
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
+
 
         [HttpPost("webhook")]
         public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
