@@ -113,7 +113,14 @@ namespace Web.Controllers
             {
                 _logger.LogInformation("📩 Webhook recibido: {Notification}", notification.ToString());
 
-                // 🔍 Validar estructura flexible del webhook
+                // 🔍 Validar que el JSON sea un objeto
+                if (notification.ValueKind != JsonValueKind.Object)
+                {
+                    _logger.LogWarning("⚠️ Webhook no es un objeto JSON válido");
+                    return BadRequest("Formato inválido");
+                }
+
+                // 🔍 Obtener 'type' o 'topic'
                 if (!notification.TryGetProperty("type", out var typeProp) &&
                     !notification.TryGetProperty("topic", out typeProp))
                 {
@@ -123,14 +130,18 @@ namespace Web.Controllers
 
                 var eventType = typeProp.GetString();
 
+                // 🔍 Obtener 'data.id'
                 if (!notification.TryGetProperty("data", out var dataProp) ||
+                    dataProp.ValueKind != JsonValueKind.Object ||
                     !dataProp.TryGetProperty("id", out var idProp))
                 {
                     _logger.LogWarning("⚠️ Webhook sin 'data.id'");
                     return BadRequest("Falta 'data.id'");
                 }
 
-                var paymentId = idProp.GetString();
+                var paymentId = idProp.ValueKind == JsonValueKind.Number
+                    ? idProp.GetInt64().ToString()
+                    : idProp.GetString();
 
                 if (string.IsNullOrEmpty(paymentId))
                 {
@@ -160,8 +171,19 @@ namespace Web.Controllers
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
-                var status = root.GetProperty("status").GetString();
-                var externalReference = root.GetProperty("external_reference").GetString();
+                var status = root.TryGetProperty("status", out var statusProp)
+                    ? statusProp.GetString()
+                    : null;
+
+                var externalReference = root.TryGetProperty("external_reference", out var refProp)
+                    ? refProp.GetString()
+                    : null;
+
+                if (string.IsNullOrEmpty(status) || string.IsNullOrEmpty(externalReference))
+                {
+                    _logger.LogWarning("⚠️ Pago sin status o external_reference. JSON={Json}", root.ToString());
+                    return Ok(); // no romper, pero no procesar
+                }
 
                 _logger.LogInformation("✅ Pago recibido. Status={Status}, ExternalRef={ExternalReference}", status, externalReference);
 
