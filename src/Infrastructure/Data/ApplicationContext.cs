@@ -70,7 +70,7 @@ namespace Infrastructure.Data
                   Price = 81000,
                   OldPrice = 81000,
                   Stock = 1,
-                  Image = "relojhombre.jpg", // <- cambiamos aquí
+                  Image = "KnockOutAylen.JPEG", // <- cambiamos aquí
                   Description = "-Analógico\r\n-Resistente a salpicaduras WR30\r\n-Fondo nacarado con números plateados\r\n-Caja de plástico\r\n-Tapa de acero\r\n-Malla extensible de metal\r\n-Agujas luminiscentes\r\n-Diámetro: 3,5 cm",
                   Color = "Rose fondo nacarado",
                   Brand = "Knock out",
@@ -89,7 +89,7 @@ namespace Infrastructure.Data
                   Price = 110000,
                   OldPrice = 110000,
                   Stock = 1,
-                  Image = "relojhombre.jpg", // <- cambiamos aquí
+                  Image = "KosiukoMica.JPEG", // <- cambiamos aquí
                   Description = "Este reloj tiene malla con eslabones, el cual necesita de un relojero para poder ajustarlo, si queres podes dejarnos en comentarios el tamaño de tu muñeca y nos encargamos de enviártelo ajustado listo para usar.\r\n\r\nOtras características:\r\n-Analógico\r\n-Sumergible WR50\r\n-Agujas luminiscentes\r\n-Calendario\r\n-Caja y malla de acero\r\n-Diámetro: 3,8cm",
                   Color = "Dorado",
                   Brand = "Kosiuko",
@@ -224,7 +224,7 @@ namespace Infrastructure.Data
                Price = 74050,
                OldPrice = 74050,
                Stock = 1,
-               Image = "relojhombre.jpg", // <- cambiamos aquí
+               Image = "KosiukoGenova.JPG", // <- cambiamos aquí
                Description = "Este reloj tiene malla con eslabones, el cual necesita de un relojero para poder ajustarlo, si queres podes dejarnos en comentarios el tamaño de tu muñeca y nos encargamos de enviártelo ajustado listo para usar.\r\n\r\nOtras características:\r\n-Analógico\r\n-Resistente a salpicaduras WR30\r\n-Caja de metal\r\n-Tapa y cierre de acero\r\n-Malla combinada\r\n-Strass\r\n-Agujas luminiscentes\r\n-Diámetro: 3,4cm",
                Color = "Plateado",
                Brand = "Knock out",
