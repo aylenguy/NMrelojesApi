@@ -158,7 +158,7 @@ namespace Web.Controllers
                 if (status == "approved")
                 {
                     // 3️⃣ Marcar la venta como aprobada
-                    venta.Status = VentaStatus.Aprobada;
+                    venta.Status = VentaStatus.Pagado;
                     await _ventaRepository.UpdateAsync(venta);
 
                     // 4️⃣ Descontar stock
