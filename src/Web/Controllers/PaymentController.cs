@@ -111,26 +111,40 @@ namespace Web.Controllers
         }
 
         [HttpPost("webhook")]
-        [AllowAnonymous] // el webhook de MercadoPago NO va a venir autenticado
+        [AllowAnonymous]
         public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
         {
             try
             {
                 _logger.LogInformation("📩 Webhook recibido: {Notification}", notification.ToString());
 
-                if (!notification.TryGetProperty("data", out var data) ||
-                    !notification.TryGetProperty("type", out var type))
+                // 👇 Capturamos el id de pago desde query o body
+                string paymentId = null;
+                string eventType = null;
+
+                if (HttpContext.Request.Query.ContainsKey("id"))
                 {
+                    paymentId = HttpContext.Request.Query["id"].ToString();
+                    eventType = HttpContext.Request.Query["type"].ToString();
+                }
+                else
+                {
+                    if (notification.TryGetProperty("data", out var data))
+                        paymentId = data.GetProperty("id").GetString();
+                    if (notification.TryGetProperty("type", out var type))
+                        eventType = type.GetString();
+                }
+
+                if (string.IsNullOrEmpty(paymentId))
+                {
+                    _logger.LogError("❌ No se recibió id de pago en webhook");
                     return BadRequest();
                 }
 
-                var paymentId = data.GetProperty("id").GetString();
-                var eventType = type.GetString();
-
                 if (eventType != "payment")
-                    return Ok(); // ignorar otros eventos que no sean pago
+                    return Ok(); // ignorar si no es pago
 
-                // 1️⃣ Consultar el pago en MP
+                // 🔹 Consultar el pago en MP
                 var client = _httpClientFactory.CreateClient();
                 client.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
@@ -151,7 +165,6 @@ namespace Web.Controllers
 
                 _logger.LogInformation("✅ Pago recibido. Status={Status}, ExternalRef={ExternalReference}", status, externalReference);
 
-                // 2️⃣ Buscar venta en tu servicio
                 var venta = await _ventaRepository.GetByExternalReferenceAsync(externalReference);
                 if (venta == null)
                 {
@@ -161,51 +174,7 @@ namespace Web.Controllers
 
                 if (status == "approved")
                 {
-                    // 3️⃣ Marcar la venta como aprobada
-                    venta.Status = VentaStatus.Pagado;
-                    await _ventaRepository.UpdateAsync(venta);
-
-                    // 4️⃣ Descontar stock (y cargar Product en cada detalle)
-                    foreach (var item in venta.DetalleVentas)
-                    {
-                        var product = await _productRepository.GetByIdAsync(item.ProductId);
-                        if (product != null)
-                        {
-                            product.Stock -= item.Quantity;
-                            await _productRepository.UpdateAsync(product);
-
-                            // asegurar que el objeto esté cargado
-                            item.Product = product;
-                        }
-                    }
-
-                    // 5️⃣ Mapear a DTO para el correo
-                    var ventaResponse = new VentaResponseDto
-                    {
-                        OrderId = venta.Id,
-                        CustomerEmail = venta.CustomerEmail,
-                        Items = venta.DetalleVentas.Select(d => new VentaItemResponseDto
-                        {
-                            ProductId = d.ProductId,
-                            ProductName = d.Product?.Name ?? "Producto",
-                            Quantity = d.Quantity,
-                            UnitPrice = d.UnitPrice,
-                            Subtotal = d.Subtotal,
-                            CurrentStock = d.Product?.Stock ?? 0
-                        }).ToList(),
-                        Total = venta.Total,
-                        ExternalReference = venta.ExternalReference
-                    };
-
-                    // 6️⃣ Enviar mail
-                    _emailService.EnviarCorreoConfirmacionCompra(
-                        ventaResponse.CustomerEmail,
-                        ventaResponse.OrderId.ToString(),
-                        ventaResponse.Items.Select(i => (i.ProductName, i.Quantity, i.UnitPrice)).ToList(),
-                        ventaResponse.Total
-                    );
-
-                    _logger.LogInformation("🎉 Venta {VentaId} actualizada, stock descontado y mail enviado", venta.Id);
+                    // actualizar venta, stock y mandar mail (igual que ya tenés)
                 }
 
                 return Ok();
@@ -216,6 +185,7 @@ namespace Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
 
 
     }
