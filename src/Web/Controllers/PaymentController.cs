@@ -105,7 +105,6 @@ namespace Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
         [HttpPost("webhook")]
         [AllowAnonymous] // el webhook de MercadoPago NO va a venir autenticado
         public async Task<IActionResult> Webhook([FromBody] JsonElement notification)
@@ -117,14 +116,24 @@ namespace Web.Controllers
                 if (!notification.TryGetProperty("data", out var data) ||
                     !notification.TryGetProperty("type", out var type))
                 {
-                    return BadRequest();
+                    _logger.LogWarning("⚠️ Webhook sin 'data' o 'type'");
+                    return BadRequest("Faltan campos requeridos");
                 }
 
                 var paymentId = data.GetProperty("id").GetString();
                 var eventType = type.GetString();
 
+                if (string.IsNullOrEmpty(paymentId))
+                {
+                    _logger.LogWarning("⚠️ ID de pago vacío en webhook");
+                    return BadRequest("ID de pago inválido");
+                }
+
                 if (eventType != "payment")
+                {
+                    _logger.LogInformation("ℹ️ Evento ignorado: {EventType}", eventType);
                     return Ok(); // ignorar otros eventos
+                }
 
                 // 1️⃣ Consultar el pago en MP
                 var client = _httpClientFactory.CreateClient();
@@ -135,7 +144,7 @@ namespace Web.Controllers
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogError("❌ Error al consultar pago en MP: {Status}", response.StatusCode);
-                    return StatusCode(500);
+                    return StatusCode(500, "Error al consultar Mercado Pago");
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
@@ -152,12 +161,18 @@ namespace Web.Controllers
                 if (venta == null)
                 {
                     _logger.LogError("❌ No se encontró venta con referencia {ExternalReference}", externalReference);
-                    return NotFound();
+                    return NotFound($"Venta no encontrada: {externalReference}");
+                }
+
+                // 3️⃣ Evitar duplicación si ya está pagada
+                if (venta.Status == VentaStatus.Pagado)
+                {
+                    _logger.LogInformation("🔁 Venta ya estaba marcada como pagada: {VentaId}", venta.Id);
+                    return Ok();
                 }
 
                 if (status == "approved")
                 {
-                    // 3️⃣ Marcar la venta como aprobada
                     venta.Status = VentaStatus.Pagado;
                     await _ventaRepository.UpdateAsync(venta);
 
@@ -165,11 +180,14 @@ namespace Web.Controllers
                     foreach (var item in venta.DetalleVentas)
                     {
                         var product = await _productRepository.GetByIdAsync(item.ProductId);
-                        if (product != null)
+                        if (product == null)
                         {
-                            product.Stock -= item.Quantity;
-                            await _productRepository.UpdateAsync(product);
+                            _logger.LogWarning("⚠️ Producto no encontrado: {ProductId}", item.ProductId);
+                            continue;
                         }
+
+                        product.Stock -= item.Quantity;
+                        await _productRepository.UpdateAsync(product);
                     }
 
                     // 5️⃣ Enviar mail usando tu mismo servicio
@@ -187,14 +205,25 @@ namespace Web.Controllers
                         ExternalReference = venta.ExternalReference
                     };
 
-                    _emailService.EnviarCorreoConfirmacionCompra(
-                        ventaResponse.CustomerEmail,
-                        ventaResponse.OrderId.ToString(),
-                        ventaResponse.Items.Select(i => (i.ProductName, i.Quantity, i.UnitPrice)).ToList(),
-                        ventaResponse.Total
-                    );
+                    try
+                    {
+                        _emailService.EnviarCorreoConfirmacionCompra(
+                            ventaResponse.CustomerEmail,
+                            ventaResponse.OrderId.ToString(),
+                            ventaResponse.Items.Select(i => (i.ProductName, i.Quantity, i.UnitPrice)).ToList(),
+                            ventaResponse.Total
+                        );
 
-                    _logger.LogInformation("🎉 Venta {VentaId} actualizada, stock descontado y mail enviado", venta.Id);
+                        _logger.LogInformation("🎉 Venta {VentaId} actualizada, stock descontado y mail enviado", venta.Id);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError(emailEx, "📧 Error al enviar correo de confirmación");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("📌 Estado de pago no aprobado: {Status}", status);
                 }
 
                 return Ok();
@@ -205,7 +234,6 @@ namespace Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
 
 
     }
