@@ -154,7 +154,7 @@ namespace Infrastructure.Migrations
                             Brand = "Knock out",
                             Color = "Rose fondo nacarado",
                             Description = "-Analógico\r\n-Resistente a salpicaduras WR30\r\n-Fondo nacarado con números plateados\r\n-Caja de plástico\r\n-Tapa de acero\r\n-Malla extensible de metal\r\n-Agujas luminiscentes\r\n-Diámetro: 3,5 cm",
-                            Images = "[\"KnockOutAylen.JPEG\",\"KnockOut2.JPEG\"]",
+                            Images = "[\"KnockOutAylen.JPEG\"]",
                             Name = "Aylen (chico)",
                             OldPrice = 81000m,
                             Price = 81000m,
