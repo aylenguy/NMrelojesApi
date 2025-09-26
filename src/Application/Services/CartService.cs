@@ -32,7 +32,7 @@ namespace Application.Services
                     Brand = i.Product.Brand,
                     Quantity = i.Quantity,
                     UnitPrice = i.Product.Price,
-                    ImageUrls = i.Product.Images ?? new List<string>(),
+                    Images= i.Product.Images ?? new List<string>(),
                     Stock = i.Product.Stock
                 }).ToList() ?? new List<CartItemDto>()
             };

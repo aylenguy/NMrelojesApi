@@ -45,19 +45,22 @@ namespace Web.Controllers
                 };
             }
 
-            // 🔹 Agregar URL completa a cada item
+            // 🔹 Agregar URL completa a cada imagen
             if (cart.Items != null)
             {
                 foreach (var item in cart.Items)
                 {
-                    if (!string.IsNullOrEmpty(item.ImageUrl))
-                        item.ImageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{item.ImageUrl}";
+                    if (item.Images != null && item.Images.Any())
+                    {
+                        item.Images = item.Images
+                            .Select(img => $"{Request.Scheme}://{Request.Host}/uploads/{img}")
+                            .ToList();
+                    }
                 }
             }
 
             return Ok(cart);
         }
-
 
         [HttpPost("add")]
         public IActionResult AddItem([FromBody] AddCartItemRequest req)
@@ -69,8 +72,12 @@ namespace Web.Controllers
 
                 foreach (var item in cart.Items)
                 {
-                    if (!string.IsNullOrEmpty(item.ImageUrl))
-                        item.ImageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{item.ImageUrl}";
+                    if (item.Images != null && item.Images.Any())
+                    {
+                        item.Images = item.Images
+                            .Select(img => $"{Request.Scheme}://{Request.Host}/uploads/{img}")
+                            .ToList();
+                    }
                 }
 
                 return Ok(cart);
@@ -81,11 +88,9 @@ namespace Web.Controllers
             }
         }
 
-
         [HttpPut("item/{cartItemId}")]
         public IActionResult UpdateItem(int cartItemId, [FromBody] UpdateCartItemRequest req)
         {
-
             try
             {
                 var clientId = GetClientIdFromClaims();
@@ -93,18 +98,20 @@ namespace Web.Controllers
 
                 foreach (var item in cart.Items)
                 {
-                    if (!string.IsNullOrEmpty(item.ImageUrl))
-                        item.ImageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{item.ImageUrl}";
+                    if (item.Images != null && item.Images.Any())
+                    {
+                        item.Images = item.Images
+                            .Select(img => $"{Request.Scheme}://{Request.Host}/uploads/{img}")
+                            .ToList();
+                    }
                 }
 
                 return Ok(cart);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
-
-
         }
 
         [HttpDelete("item/{cartItemId}")]
@@ -115,8 +122,12 @@ namespace Web.Controllers
 
             foreach (var item in cart.Items)
             {
-                if (!string.IsNullOrEmpty(item.ImageUrl))
-                    item.ImageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{item.ImageUrl}";
+                if (item.Images != null && item.Images.Any())
+                {
+                    item.Images = item.Images
+                        .Select(img => $"{Request.Scheme}://{Request.Host}/uploads/{img}")
+                        .ToList();
+                }
             }
 
             return Ok(cart);
@@ -148,12 +159,17 @@ namespace Web.Controllers
 
             foreach (var item in cart.Items ?? new List<CartItemDto>())
             {
-                if (!string.IsNullOrEmpty(item.ImageUrl))
-                    item.ImageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{item.ImageUrl}";
+                if (item.Images != null && item.Images.Any())
+                {
+                    item.Images = item.Images
+                        .Select(img => $"{Request.Scheme}://{Request.Host}/uploads/{img}")
+                        .ToList();
+                }
             }
 
             return Ok(cart);
         }
+
         [AllowAnonymous]
         [HttpPost("guest/add")]
         public IActionResult AddItemGuest([FromQuery] string guestId, [FromBody] AddCartItemRequest req)
@@ -167,8 +183,12 @@ namespace Web.Controllers
 
                 foreach (var item in cart.Items)
                 {
-                    if (!string.IsNullOrEmpty(item.ImageUrl))
-                        item.ImageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{item.ImageUrl}";
+                    if (item.Images != null && item.Images.Any())
+                    {
+                        item.Images = item.Images
+                            .Select(img => $"{Request.Scheme}://{Request.Host}/uploads/{img}")
+                            .ToList();
+                    }
                 }
 
                 return Ok(new { guestId, cart });
@@ -192,8 +212,12 @@ namespace Web.Controllers
 
                 foreach (var item in cart.Items)
                 {
-                    if (!string.IsNullOrEmpty(item.ImageUrl))
-                        item.ImageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{item.ImageUrl}";
+                    if (item.Images != null && item.Images.Any())
+                    {
+                        item.Images = item.Images
+                            .Select(img => $"{Request.Scheme}://{Request.Host}/uploads/{img}")
+                            .ToList();
+                    }
                 }
 
                 return Ok(cart);
@@ -203,7 +227,6 @@ namespace Web.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
 
         [AllowAnonymous]
         [HttpDelete("guest/item/{cartItemId}")]
@@ -216,8 +239,12 @@ namespace Web.Controllers
 
             foreach (var item in cart.Items)
             {
-                if (!string.IsNullOrEmpty(item.ImageUrl))
-                    item.ImageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{item.ImageUrl}";
+                if (item.Images != null && item.Images.Any())
+                {
+                    item.Images = item.Images
+                        .Select(img => $"{Request.Scheme}://{Request.Host}/uploads/{img}")
+                        .ToList();
+                }
             }
 
             return Ok(cart);
@@ -239,7 +266,7 @@ namespace Web.Controllers
     public class AddCartItemRequest
     {
         public int ProductId { get; set; }
-        public int  Quantity { get; set; }
+        public int Quantity { get; set; }
     }
 
     public class UpdateCartItemRequest
@@ -247,4 +274,3 @@ namespace Web.Controllers
         public int Quantity { get; set; }
     }
 }
-

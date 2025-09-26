@@ -1,6 +1,4 @@
 ﻿using Application.Interfaces;
-using Application.Models.Requests;
-using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -41,12 +39,12 @@ namespace Web.Controllers
                 Nombre = p.Name,
                 Precio = p.Price,
                 PrecioAnterior = p.OldPrice,
-                Imagen = string.IsNullOrEmpty(p.Image) ? null : baseUrl + p.Image,
+                Imagenes = p.Images?.Select(img => baseUrl + img).ToList() ?? new List<string>(), // ✅ lista de URLs
                 Descripcion = p.Description,
                 Color = p.Color,
-                Caracteristicas = p.Specs,
+                Caracteristicas = p.Specs?.ToList() ?? new List<string>(),
                 p.Stock,
-                Marca = p.Brand // 🔥 Nuevo: incluye la marca
+                Marca = p.Brand
             });
 
             return Ok(updatedProducts);
@@ -80,7 +78,6 @@ namespace Web.Controllers
             return Ok(productDto);
         }
 
-
         // ✅ GET PRODUCT BY ID (Solo Admin)
         [HttpGet("{id}")]
         public IActionResult GetById([FromRoute] int id)
@@ -100,7 +97,7 @@ namespace Web.Controllers
                 Nombre = product.Name,
                 Precio = product.Price,
                 PrecioAnterior = product.OldPrice,
-                Imagenes = product.Images?.Select(img => baseUrl + img).ToList() ?? new List<string>(), // ✅ lista
+                Imagenes = product.Images?.Select(img => baseUrl + img).ToList() ?? new List<string>(),
                 Descripcion = product.Description,
                 Color = product.Color,
                 Caracteristicas = product.Specs?.Split(',').ToList() ?? new List<string>(),
@@ -110,7 +107,6 @@ namespace Web.Controllers
 
             return Ok(productDto);
         }
-
 
         // ✅ ADD PRODUCT con IFormFile (Solo Admin)
         [HttpPost]
@@ -139,7 +135,6 @@ namespace Web.Controllers
 
             var newProductId = _productService.AddProduct(request, fileName);
 
-            // Generar URL completa de la imagen
             string imageUrl = fileName != null
                 ? $"{Request.Scheme}://{Request.Host}/uploads/{fileName}"
                 : null;
@@ -150,10 +145,9 @@ namespace Web.Controllers
                 {
                     message = "Producto creado correctamente",
                     id = newProductId,
-                    imageUrl = imageUrl // ✅ agregamos la URL completa
+                    imageUrl = imageUrl
                 });
         }
-
 
         [HttpPut("{id}")]
         public ActionResult UpdateProduct([FromRoute] int id, [FromBody] ProductUpdateRequest request)
@@ -168,6 +162,7 @@ namespace Web.Controllers
             _productService.UpdateProduct(id, request);
             return Ok(new { message = $"Producto con ID: {id} actualizado correctamente" });
         }
+
         // ✅ DELETE PRODUCT (Solo Admin)
         [HttpDelete("{id}")]
         public IActionResult DeleteProduct([FromRoute] int id)
@@ -185,9 +180,5 @@ namespace Web.Controllers
                 return BadRequest("Error al eliminar el producto, tiene ventas asociadas");
             }
         }
-
-
     }
 }
-
-
