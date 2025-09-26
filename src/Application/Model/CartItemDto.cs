@@ -8,7 +8,7 @@ public class CartItemDto
     public decimal UnitPrice { get; set; } // ✅ renombrado de Price
 
     public string Brand { get; set; }  // <-- nuevo
-    public string ImageUrl { get; set; }
+    public List<string> ImageUrls { get; set; } = new List<string>();
 
     public int Stock { get; set; }
 

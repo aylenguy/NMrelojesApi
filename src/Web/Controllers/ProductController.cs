@@ -63,14 +63,13 @@ namespace Web.Controllers
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}/uploads/";
 
-            // 🔹 Aquí reemplazas la devolución directa por el DTO anónimo
             var productDto = new
             {
                 product.Id,
                 Nombre = product.Name,
                 Precio = product.Price,
                 PrecioAnterior = product.OldPrice,
-                Imagen = string.IsNullOrEmpty(product.Images) ? null : baseUrl + product.Images,
+                Imagenes = product.Images?.Select(img => baseUrl + img).ToList() ?? new List<string>(), // ✅ lista de URLs
                 Descripcion = product.Description,
                 Color = product.Color,
                 Caracteristicas = product.Specs?.Split(',').ToList() ?? new List<string>(),
@@ -101,7 +100,7 @@ namespace Web.Controllers
                 Nombre = product.Name,
                 Precio = product.Price,
                 PrecioAnterior = product.OldPrice,
-                Imagen = string.IsNullOrEmpty(product.Images) ? null : baseUrl + product.Images,
+                Imagenes = product.Images?.Select(img => baseUrl + img).ToList() ?? new List<string>(), // ✅ lista
                 Descripcion = product.Description,
                 Color = product.Color,
                 Caracteristicas = product.Specs?.Split(',').ToList() ?? new List<string>(),

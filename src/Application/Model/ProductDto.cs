@@ -14,7 +14,8 @@
         public decimal? OldPrice { get; set; }
 
         // Imagen principal (URL o base64)
-        public string Image { get; set; } = string.Empty;
+        public List<string> Images { get; set; } = new List<string>();
+
 
         // Descripción del producto
         public string Description { get; set; } = string.Empty;

@@ -28,16 +28,17 @@ namespace Application.Services
                 Name = p.Name,
                 Price = p.Price,
                 OldPrice = p.OldPrice,
-                Image = p.Images,
+                Images = p.Images ?? new List<string>(), // ✅ ahora lista
                 Description = p.Description,
                 Color = p.Color,
                 Specs = string.IsNullOrEmpty(p.Specs)
                     ? new List<string>()
                     : p.Specs.Split(',').ToList(),
-                Stock = p.Stock, // 🔹 Ahora sí lo devuelve
-                    Brand = p.Brand  // 🔥 Nuevo: mapeo de la marca
+                Stock = p.Stock,
+                Brand = p.Brand
             }).ToList();
         }
+
 
         public Product? Get(string name)
         {
@@ -61,7 +62,7 @@ namespace Application.Services
                 Name = request.Name,
                 Price = request.Price,
                 OldPrice = request.OldPrice,
-                Images = imageFileName, // ahora sí existe
+                Images = new List<string> { imageFileName }, // ✅ ahora es lista
                 Description = request.Description,
                 Color = request.Color,
                 Specs = string.Join(",", request.Caracteristicas),
@@ -71,7 +72,6 @@ namespace Application.Services
 
             return _repository.Add(product).Id;
         }
-
         public void DeleteProduct(int id)
         {
             var productToDelete = _repository.Get(id);
