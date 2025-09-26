@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20250926042546_InitialCreate")]
+    [Migration("20250926043349_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -248,7 +248,7 @@ namespace Infrastructure.Migrations
                             Brand = "Knock out",
                             Color = "Blanco",
                             Description = "-Analógico\r\n-Malla de silicona...",
-                            Images = "[\"/uploads/relojhombre.jpg\"]",
+                            Images = "[\"relojhombre.jpg\"]",
                             Name = "Rita",
                             OldPrice = 64700m,
                             Price = 60480m,

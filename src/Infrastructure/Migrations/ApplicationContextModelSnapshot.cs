@@ -245,7 +245,7 @@ namespace Infrastructure.Migrations
                             Brand = "Knock out",
                             Color = "Blanco",
                             Description = "-Analógico\r\n-Malla de silicona...",
-                            Images = "[\"/uploads/relojhombre.jpg\"]",
+                            Images = "[\"relojhombre.jpg\"]",
                             Name = "Rita",
                             OldPrice = 64700m,
                             Price = 60480m,

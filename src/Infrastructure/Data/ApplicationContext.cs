@@ -157,7 +157,7 @@ namespace Infrastructure.Data
                     Price = 60480,
                     OldPrice = 64700,
                     Stock = 1,
-                    Images = new List<string> { "/uploads/relojhombre.jpg" },
+                    Images = new List<string> { "relojhombre.jpg" },
                     Description = "-Analógico\r\n-Malla de silicona...",
                     Color = "Blanco",
                     Brand = "Knock out",
