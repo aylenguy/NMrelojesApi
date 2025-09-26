@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20250926170020_InitialCreate")]
+    [Migration("20250926210921_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -157,7 +157,7 @@ namespace Infrastructure.Migrations
                             Brand = "Knock out",
                             Color = "Rose fondo nacarado",
                             Description = "-Analógico\r\n-Resistente a salpicaduras WR30\r\n-Fondo nacarado con números plateados\r\n-Caja de plástico\r\n-Tapa de acero\r\n-Malla extensible de metal\r\n-Agujas luminiscentes\r\n-Diámetro: 3,5 cm",
-                            Images = "[\"KnockOutAylen.JPEG\"]",
+                            Images = "[\"KnockOutAylen.JPEG\",\"KnockOutAylen2.JPEG\"]",
                             Name = "Aylen (chico)",
                             OldPrice = 81000m,
                             Price = 81000m,
@@ -170,7 +170,7 @@ namespace Infrastructure.Migrations
                             Brand = "Kosiuko",
                             Color = "Dorado",
                             Description = "Este reloj tiene malla con eslabones, el cual necesita de un relojero para poder ajustarlo, si queres podes dejarnos en comentarios el tamaño de tu muñeca y nos encargamos de enviártelo ajustado listo para usar.\r\n\r\nOtras características:\r\n-Analógico\r\n-Sumergible WR50\r\n-Agujas luminiscentes\r\n-Calendario\r\n-Caja y malla de acero\r\n-Diámetro: 3,8cm",
-                            Images = "[\"KosiukoMica.JPEG\",\"kosiukoMica2.JPEG\"]",
+                            Images = "[\"KosiukoMica.JPEG\",\"KosiukoMica2.JPEG\"]",
                             Name = "Mica",
                             OldPrice = 110000m,
                             Price = 110000m,

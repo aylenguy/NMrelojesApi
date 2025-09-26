@@ -18,7 +18,7 @@ namespace Domain.Entities
         public string Name { get; set; }
         public decimal Price { get; set; }
         public decimal? OldPrice { get; set; }
-        public List<string> Images { get; set; } = new();
+        public List<string> Images  { get; set; } = new();
         public string Description { get; set; } = string.Empty;
         public string Specs { get; set; } = string.Empty;
         public string? Color { get; set; } // ← con "?" se hace opcional (nullable)
