@@ -3,7 +3,6 @@ using Application.Models.DTOs;
 using Domain.Entities;
 using Domain.Interfaces;
 
-
 namespace Application.Services
 {
     public class ProductService : IProductService
@@ -14,6 +13,8 @@ namespace Application.Services
         {
             _repository = repository;
         }
+
+        // 🔹 Obtener TODOS los productos en formato DTO
         public List<ProductDto> GetAllProducts()
         {
             return _repository.GetAll().Select(p => new ProductDto
@@ -22,7 +23,7 @@ namespace Application.Services
                 Name = p.Name,
                 Price = p.Price,
                 OldPrice = p.OldPrice,
-                Images = p.Images ?? new List<string>(), // ✅ ahora lista
+                Images = p.Images ?? new List<string>(), // ✅ siempre lista
                 Description = p.Description,
                 Color = p.Color,
                 Specs = string.IsNullOrEmpty(p.Specs)
@@ -33,22 +34,40 @@ namespace Application.Services
             }).ToList();
         }
 
-
+        // 🔹 Obtener producto por nombre (entidad cruda)
         public Product? Get(string name)
         {
             return _repository.Get(name);
         }
 
-        public Product? GetById(int id)
-        {
-            return _repository.Get(id);
-        }
-
+        // 🔹 Obtener producto por ID (entidad cruda)
         public Product? Get(int id)
         {
             return _repository.Get(id);
         }
 
+        // 🔹 Obtener producto por ID pero ya en DTO (para el Controller)
+        public ProductDto? GetByIdDto(int id)
+        {
+            var p = _repository.Get(id);
+            if (p == null) return null;
+
+            return new ProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                OldPrice = p.OldPrice,
+                Images = p.Images ?? new List<string>(), // ✅ lista garantizada
+                Description = p.Description,
+                Color = p.Color,
+                Specs = string.IsNullOrEmpty(p.Specs) ? new List<string>() : p.Specs.Split(',').ToList(),
+                Stock = p.Stock,
+                Brand = p.Brand
+            };
+        }
+
+        // 🔹 Agregar producto con múltiples imágenes
         public int AddProduct(ProductCreateRequest request, List<string> imageFileNames)
         {
             var product = new Product()
@@ -56,7 +75,7 @@ namespace Application.Services
                 Name = request.Name,
                 Price = request.Price,
                 OldPrice = request.OldPrice,
-                Images = imageFileNames, // 👈 ahora guarda TODAS las imágenes
+                Images = imageFileNames ?? new List<string>(), // ✅ guarda todas
                 Description = request.Description,
                 Color = request.Color,
                 Specs = string.Join(",", request.Caracteristicas),
@@ -66,6 +85,8 @@ namespace Application.Services
 
             return _repository.Add(product).Id;
         }
+
+        // 🔹 Eliminar producto
         public void DeleteProduct(int id)
         {
             var productToDelete = _repository.Get(id);
@@ -75,22 +96,16 @@ namespace Application.Services
             }
         }
 
-
+        // 🔹 Actualizar producto
         public void UpdateProduct(int id, ProductUpdateRequest request)
         {
             var productToUpdate = _repository.Get(id);
             if (productToUpdate != null)
             {
-                // 🔹 Nombre
+                // Campos de texto
                 if (!string.IsNullOrWhiteSpace(request.Name))
                     productToUpdate.Name = request.Name;
 
-                // Campos numéricos
-                productToUpdate.Price = request.Price;
-                productToUpdate.Stock = request.Stock;
-                productToUpdate.OldPrice = request.OldPrice;
-
-                // Texto
                 if (!string.IsNullOrWhiteSpace(request.Description))
                     productToUpdate.Description = request.Description;
 
@@ -100,6 +115,10 @@ namespace Application.Services
                 if (!string.IsNullOrWhiteSpace(request.Brand))
                     productToUpdate.Brand = request.Brand;
 
+                // Campos numéricos
+                productToUpdate.Price = request.Price;
+                productToUpdate.Stock = request.Stock;
+                productToUpdate.OldPrice = request.OldPrice;
 
                 // Características
                 if (request.Caracteristicas != null && request.Caracteristicas.Any())
@@ -108,10 +127,5 @@ namespace Application.Services
                 _repository.Update(productToUpdate);
             }
         }
-
-
     }
 }
-
-
-

@@ -85,7 +85,7 @@ namespace Web.Controllers
             if (!IsUserInRole("Admin"))
                 return Forbid();
 
-            var product = _productService.Get(id);
+            var product = _productService.GetByIdDto(id); // 👈 usamos el DTO
             if (product == null)
                 return NotFound($"Producto con el ID: {id} no encontrado");
 
@@ -100,7 +100,7 @@ namespace Web.Controllers
                 Imagenes = product.Images?.Select(img => baseUrl + img).ToList() ?? new List<string>(),
                 Descripcion = product.Description,
                 Color = product.Color,
-                Caracteristicas = product.Specs?.Split(',').ToList() ?? new List<string>(),
+                Caracteristicas = product.Specs?.ToList() ?? new List<string>(),
                 product.Stock,
                 Marca = product.Brand
             };

@@ -1,5 +1,4 @@
-﻿
-using Domain.Entities;
+﻿using Domain.Entities;
 using Application.Models.DTOs;
 using Application.Models.Requests;
 
@@ -7,13 +6,13 @@ namespace Application.Interfaces
 {
     public interface IProductService
     {
-        List<ProductDto> GetAllProducts(); // ← CAMBIO AQUÍ
+        List<ProductDto> GetAllProducts();
         Product? Get(string name);
-        Product? Get(int id);
+        Product? Get(int id); // entidad cruda (si la necesitás internamente)
 
-        Product? GetById(int id);
+        ProductDto? GetByIdDto(int id); // DTO para el controller
 
-        public int AddProduct(ProductCreateRequest request, List<string> imageFileNames);
+        int AddProduct(ProductCreateRequest request, List<string> imageFileNames);
 
         void DeleteProduct(int id);
         void UpdateProduct(int id, ProductUpdateRequest request);
