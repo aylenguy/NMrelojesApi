@@ -110,34 +110,36 @@ namespace Web.Controllers
 
         // ✅ ADD PRODUCT con IFormFile (Solo Admin)
         [HttpPost]
-        public IActionResult AddProduct([FromForm] ProductCreateRequest request, IFormFile imageFile)
+        public IActionResult AddProduct([FromForm] ProductCreateRequest request, List<IFormFile> imageFiles)
         {
             if (!IsUserInRole("Admin"))
                 return Forbid();
 
-            string fileName = null;
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
 
-            if (imageFile != null && imageFile.Length > 0)
+            var fileNames = new List<string>();
+
+            if (imageFiles != null && imageFiles.Count > 0)
             {
-                var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
-
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                fileName = Guid.NewGuid() + Path.GetExtension(imageFile.FileName);
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                foreach (var imageFile in imageFiles)
                 {
-                    imageFile.CopyTo(stream);
+                    var fileName = Guid.NewGuid() + Path.GetExtension(imageFile.FileName);
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        imageFile.CopyTo(stream);
+                    }
+
+                    fileNames.Add(fileName);
                 }
             }
 
-            var newProductId = _productService.AddProduct(request, fileName);
+            var newProductId = _productService.AddProduct(request, fileNames);
 
-            string imageUrl = fileName != null
-                ? $"{Request.Scheme}://{Request.Host}/uploads/{fileName}"
-                : null;
+            var imageUrls = fileNames.Select(fn => $"{Request.Scheme}://{Request.Host}/uploads/{fn}").ToList();
 
             return CreatedAtAction(nameof(GetById),
                 new { id = newProductId },
@@ -145,9 +147,10 @@ namespace Web.Controllers
                 {
                     message = "Producto creado correctamente",
                     id = newProductId,
-                    imageUrl = imageUrl
+                    imageUrls
                 });
         }
+
 
         [HttpPut("{id}")]
         public ActionResult UpdateProduct([FromRoute] int id, [FromBody] ProductUpdateRequest request)

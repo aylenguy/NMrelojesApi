@@ -49,14 +49,14 @@ namespace Application.Services
             return _repository.Get(id);
         }
 
-        public int AddProduct(ProductCreateRequest request, string imageFileName)
+        public int AddProduct(ProductCreateRequest request, List<string> imageFileNames)
         {
             var product = new Product()
             {
                 Name = request.Name,
                 Price = request.Price,
                 OldPrice = request.OldPrice,
-                Images = new List<string> { imageFileName }, // ✅ ahora es lista
+                Images = imageFileNames, // 👈 ahora guarda TODAS las imágenes
                 Description = request.Description,
                 Color = request.Color,
                 Specs = string.Join(",", request.Caracteristicas),
