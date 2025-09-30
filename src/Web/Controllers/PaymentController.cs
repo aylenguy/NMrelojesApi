@@ -51,53 +51,53 @@ namespace Web.Controllers
         {
             try
             {
-                // 1️⃣ Validar productos
-                foreach (var item in dto.Items)
-                {
-                    var product = await _productRepository.GetByIdAsync(item.ProductId);
-                    if (product == null)
-                        return BadRequest(new { error = $"El producto con Id {item.ProductId} no existe" });
-                }
-
-                // 2️⃣ Crear la venta en estado Pendiente
+                // 1️⃣ Generamos externalReference primero
                 var externalReference = Guid.NewGuid().ToString();
-
-                var venta = new Venta
-                {
-                    Date = DateTime.UtcNow,
-                    Status = VentaStatus.Pendiente,
-                    ExternalReference = externalReference,
-                    CustomerEmail = dto.PayerEmail ?? string.Empty,
-                    DetalleVentas = dto.Items.Select(i => new DetalleVenta
-                    {
-                        ProductId = i.ProductId,
-                        Quantity = i.Quantity,
-                        UnitPrice = i.UnitPrice,
-                        Subtotal = i.UnitPrice * i.Quantity
-                    }).ToList()
-                };
-
-                venta.Total = venta.DetalleVentas.Sum(d => d.Subtotal);
-
-                await _ventaRepository.AddAsync(venta);
-                _logger.LogInformation("Venta creada con Id {VentaId} y ExternalReference {ExternalReference}",
-                                        venta.Id, venta.ExternalReference);
-
-                // 3️⃣ Asociar ExternalReference a MercadoPago
                 dto.ExternalReference = externalReference;
 
-                // 4️⃣ Crear preferencia en MercadoPago
+                // 2️⃣ Creamos preferencia en MP
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
                 if (preference == null)
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
+                // 3️⃣ Guardamos la venta en background (no bloqueamos al cliente)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var venta = new Venta
+                        {
+                            Date = DateTime.UtcNow,
+                            Status = VentaStatus.Pendiente,
+                            ExternalReference = externalReference,
+                            CustomerEmail = dto.PayerEmail ?? string.Empty,
+                            DetalleVentas = dto.Items.Select(i => new DetalleVenta
+                            {
+                                ProductId = i.ProductId,
+                                Quantity = i.Quantity,
+                                UnitPrice = i.UnitPrice,
+                                Subtotal = i.UnitPrice * i.Quantity
+                            }).ToList(),
+                            Total = dto.Items.Sum(i => i.UnitPrice * i.Quantity)
+                        };
+
+                        await _ventaRepository.AddAsync(venta);
+                        _logger.LogInformation("Venta creada async con Id {VentaId} y ExternalReference {ExternalReference}",
+                                                venta.Id, venta.ExternalReference);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "❌ Error guardando venta en background");
+                    }
+                });
+
+                // 4️⃣ Respondemos rápido al front
                 return Ok(new
                 {
                     initPoint = preference.InitPoint,
                     sandboxInitPoint = preference.SandboxInitPoint,
                     externalReference
                 });
-
             }
             catch (Exception ex)
             {
@@ -105,6 +105,7 @@ namespace Web.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
         [HttpPost("webhook")]
         [AllowAnonymous]
         public async Task<IActionResult> Webhook()

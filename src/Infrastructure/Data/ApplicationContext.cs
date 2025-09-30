@@ -109,7 +109,7 @@ namespace Infrastructure.Data
                     Description = "-Analógico\r\n-Resistente a salpicaduras: WR30...",
                     Color = "Rose fondo nacarado",
                     Brand = "Knock out",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -122,7 +122,7 @@ namespace Infrastructure.Data
                     Description = "-Analógico\r\n-Sumergible 50 mts...",
                     Color = "rosa bb",
                     Brand = "Tressa",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -135,7 +135,7 @@ namespace Infrastructure.Data
                     Description = "Este reloj tiene malla con eslabones...",
                     Color = "Plateado",
                     Brand = "Knock out",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -148,7 +148,7 @@ namespace Infrastructure.Data
                     Description = "Este reloj tiene malla con eslabones...",
                     Color = "Plateado con nacar",
                     Brand = "Kosiuko",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -161,7 +161,7 @@ namespace Infrastructure.Data
                     Description = "-Analógico\r\n-Malla de silicona...",
                     Color = "Blanco",
                     Brand = "Knock out",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -174,7 +174,7 @@ namespace Infrastructure.Data
                     Description = "Este reloj tiene malla con eslabones...",
                     Color = "Plateado",
                     Brand = "Knock out",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -187,7 +187,7 @@ namespace Infrastructure.Data
                     Description = "-Analógico\r\n-Resistente a salpicaduras...",
                     Color = "Plateado fondo nacarado",
                     Brand = "Knock out",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -200,7 +200,7 @@ namespace Infrastructure.Data
                     Description = "-Analógico\r\n-Resistente a salpicaduras...",
                     Color = "Plateado",
                     Brand = "Knock out",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -213,7 +213,7 @@ namespace Infrastructure.Data
                     Description = "-Analógico\r\n-Resistente al agua W30...",
                     Color = "Nude",
                     Brand = "Tressa",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
@@ -226,7 +226,7 @@ namespace Infrastructure.Data
                     Description = "-Analógico\r\n-Sumergible 50 mts...",
                     Color = "Tiza con numeros dorados",
                     Brand = "Tressa",
-                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial..."
+                    Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
                 },
                 new Product
                 {
