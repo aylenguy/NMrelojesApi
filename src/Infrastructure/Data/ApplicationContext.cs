@@ -93,7 +93,7 @@ namespace Infrastructure.Data
                     OldPrice = 110000,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "Este reloj tiene malla con eslabones...",
+                    Description = "Este reloj tiene malla con eslabones, el cual necesita de un relojero para poder ajustarlo, si queres podes dejarnos en comentarios el tamaño de tu muñeca y nos encargamos de enviártelo ajustado listo para usar.\r\n \r\nOtras características:\r\n-Analógico\r\n-Sumergible WR50\r\n-Agujas luminiscentes\r\n-Calendario\r\n-Caja y malla de acero\r\n-Diámetro: 3,8cm.",
                     Color = "Rose",
                     Brand = "Kosiuko",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -106,7 +106,7 @@ namespace Infrastructure.Data
                     OldPrice = 69330,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "-Analógico\r\n-Resistente a salpicaduras: WR30...",
+                    Description = "-Analógico\r\n-Resistente a salpicaduras: WR30\r\n-Fondo nacarado\r\n-Caja de metal\r\n-Malla tejida regulable de metal\r\n-Cierre autoajustable de acero\r\n-Agujas luminiscentes\r\n-Diámetro: 3,4 cm",
                     Color = "Rose fondo nacarado",
                     Brand = "Knock out",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -119,7 +119,7 @@ namespace Infrastructure.Data
                     OldPrice = 93600,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "-Analógico\r\n-Sumergible 50 mts...",
+                    Description = "-Analógico\r\n-Sumergible 50 mts\r\n-Caja de acrílico\r\n-Tapa de acero\r\n-Malla de silicona perlada\r\n-Diámetro: 3,5cm",
                     Color = "rosa bb",
                     Brand = "Tressa",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -132,7 +132,7 @@ namespace Infrastructure.Data
                     OldPrice = 69331,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "Este reloj tiene malla con eslabones...",
+                    Description = "Este reloj tiene malla con eslabones, el cual necesita de un relojero para poder ajustarlo, si queres podes dejarnos en comentarios el tamaño de tu muñeca y nos encargamos de enviártelo ajustado listo para usar.\r\n\r\nOtras características:\r\n-Analógico\r\n-Resistente al agua W30\r\n-Fondo nacarado con perlitas\r\n-Agujas luminiscentes\r\n-Caja y malla de metal\r\n-Tapa y cierre de acero\r\n-Diámetro: 3cm",
                     Color = "Plateado",
                     Brand = "Knock out",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -145,7 +145,7 @@ namespace Infrastructure.Data
                     OldPrice = 100000,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "Este reloj tiene malla con eslabones...",
+                    Description = "Este reloj tiene malla con eslabones, el cual necesita de un relojero para poder ajustarlo, si queres podes dejarnos en comentarios el tamaño de tu muñeca y nos encargamos de enviártelo ajustado listo para usar.\r\n\r\nOtras características:\r\n-Analógico\r\n-Sumergible 50 mts\r\n-Calendario\r\n-Agujas luminiscentes\r\n-Caja de acetato y acero\r\n-Tapa y cierre de acero\r\n-Ancho pulsera: 2,2cm\r\n-Diámetro: 4 cm",
                     Color = "Plateado con nacar",
                     Brand = "Kosiuko",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -158,7 +158,7 @@ namespace Infrastructure.Data
                     OldPrice = 64700,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "-Analógico\r\n-Malla de silicona...",
+                    Description = "-Analógico\r\n-Malla de silicona sin glitter\r\n-Resistente al agua W30\r\n-Caja de plástico ABS\r\n-Tapa de acero\r\n-Hebilla de plástico\r\n-Diámetro del reloj : 4 cm",
                     Color = "Blanco",
                     Brand = "Knock out",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -171,7 +171,7 @@ namespace Infrastructure.Data
                     OldPrice = 74050,
                     Stock = 1,
                     Images = new List<string> { "KosiukoGenova.JPG", "KosiukoGenova2.JPG" },
-                    Description = "Este reloj tiene malla con eslabones...",
+                    Description = "Este reloj tiene malla con eslabones, el cual necesita de un relojero para poder ajustarlo, si queres podes dejarnos en comentarios el tamaño de tu muñeca y nos encargamos de enviártelo ajustado listo para usar.\r\n\r\nOtras características:\r\n-Analógico\r\n-Resistente a salpicaduras WR30\r\n-Caja de metal\r\n-Tapa y cierre de acero\r\n-Malla combinada\r\n-Strass\r\n-Agujas luminiscentes\r\n-Diámetro: 3,4cm",
                     Color = "Plateado",
                     Brand = "Knock out",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -184,7 +184,7 @@ namespace Infrastructure.Data
                     OldPrice = 69330,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "-Analógico\r\n-Resistente a salpicaduras...",
+                    Description = "-Analógico\r\n-Resistente a salpicaduras: WR30\r\n-Fondo nacarado\r\n-Caja de metal\r\n-Malla tejida regulable de metal\r\n-Cierre autoajustable de acero\r\n-Agujas luminiscentes\r\n-Diámetro: 3,4 cm",
                     Color = "Plateado fondo nacarado",
                     Brand = "Knock out",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -197,7 +197,7 @@ namespace Infrastructure.Data
                     OldPrice = 73344,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "-Analógico\r\n-Resistente a salpicaduras...",
+                    Description = "-Analógico\r\n-Resistente a salpicaduras WR30\r\n-Caja de metal\r\n-Tapa de acero\r\n-Malla extensible de metal\r\n-Diámetro: 3,3cm",
                     Color = "Plateado",
                     Brand = "Knock out",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -210,7 +210,7 @@ namespace Infrastructure.Data
                     OldPrice = 73920,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "-Analógico\r\n-Resistente al agua W30...",
+                    Description = "-Analógico\r\n-Resistente al agua W30\r\n-Malla de silicona sin glitter\r\n-Caja de plástico ABS\r\n-Tapa de acero\r\n-Hebilla de plástico\r\n-Diámetro del reloj : 4,2  cm\r\n ",
                     Color = "Nude",
                     Brand = "Tressa",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -221,9 +221,9 @@ namespace Infrastructure.Data
                     Name = "Ari",
                     Price = 93600,
                     OldPrice = 93600,
-                    Stock = 1,
+                    Stock = 0,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "-Analógico\r\n-Sumergible 50 mts...",
+                    Description = "-Analógico\r\n-Sumergible 50 mts\r\n-Caja de acrílico\r\n-Tapa de acero\r\n-Agujas luminiscentes\r\n-Malla de silicona perlada\r\n-Diámetro: 4 cm",
                     Color = "Tiza con numeros dorados",
                     Brand = "Tressa",
                     Specs = "Todos los relojes cuentan con 1 año de garantía oficial de fábrica ante cualquier falla en el funcionamiento del reloj"
@@ -236,7 +236,7 @@ namespace Infrastructure.Data
                     OldPrice = 93600,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "-Analógico\r\n-Sumergible 50 mts...",
+                    Description = "-Analógico\r\n-Sumergible 50 mts\r\n-Caja de acrílico\r\n-Tapa de metal\r\n-Malla de silicona\r\n-Diámetro: 3,5cm",
                     Color = "Blanco fondo dorado",
                     Brand = "Tressa",
                     Specs = ""
@@ -249,7 +249,7 @@ namespace Infrastructure.Data
                     OldPrice = 89700,
                     Stock = 1,
                     Images = new List<string> { "relojhombre.jpg" },
-                    Description = "– Analógico\r\n– Resistencia al agua...",
+                    Description = "– Analógico\r\n– Resistencia al agua\r\n– Calendario\r\n– Strass\r\n– Caja de ABS y aluminio\r\n– Tapa de acero\r\n– Malla de aluminio\r\n– Cierre de acero\r\n– Diámetro del reloj: 42 mm.",
                     Color = "Negro",
                     Brand = "Kosiuko",
                     Specs = ""
