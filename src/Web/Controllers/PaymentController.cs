@@ -5,6 +5,7 @@ using Application.Model.Request;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Application.Services;
 
 namespace Web.Controllers
 {
@@ -51,16 +52,13 @@ namespace Web.Controllers
         {
             try
             {
-                // 1️⃣ Generamos externalReference primero
                 var externalReference = Guid.NewGuid().ToString();
                 dto.ExternalReference = externalReference;
 
-                // 2️⃣ Creamos preferencia en MP
                 var preference = await _paymentService.CreateCheckoutPreferenceAsync(dto);
                 if (preference == null)
                     return BadRequest(new { error = "No se pudo generar la preferencia" });
 
-                // 3️⃣ Guardamos la venta en background (no bloqueamos al cliente)
                 _ = Task.Run(async () =>
                 {
                     try
@@ -91,7 +89,6 @@ namespace Web.Controllers
                     }
                 });
 
-                // 4️⃣ Respondemos rápido al front
                 return Ok(new
                 {
                     initPoint = preference.InitPoint,
@@ -118,7 +115,6 @@ namespace Web.Controllers
                 string? type = null;
                 string? dataId = null;
 
-                // 1️⃣ Si viene como JSON
                 if (!string.IsNullOrWhiteSpace(body) && body.TrimStart().StartsWith("{"))
                 {
                     using var doc = JsonDocument.Parse(body);
@@ -140,7 +136,6 @@ namespace Web.Controllers
                 }
                 else
                 {
-                    // 2️⃣ Si viene como form-urlencoded
                     var form = await Request.ReadFormAsync();
                     type = form["type"].FirstOrDefault() ?? form["topic"].FirstOrDefault();
                     dataId = form["data.id"].FirstOrDefault();
@@ -149,7 +144,7 @@ namespace Web.Controllers
                 if (string.IsNullOrEmpty(type) || string.IsNullOrEmpty(dataId))
                 {
                     _logger.LogWarning("⚠️ Webhook sin 'type' o 'data.id'. Ignorado.");
-                    return Ok(); // devolvemos 200 para que MP no reintente infinito
+                    return Ok();
                 }
 
                 _logger.LogInformation("✅ Webhook parseado correctamente. Type={Type}, PaymentId={PaymentId}", type, dataId);
@@ -160,7 +155,6 @@ namespace Web.Controllers
                     return Ok();
                 }
 
-                // 🔍 Consultamos el pago en MercadoPago
                 var client = _httpClientFactory.CreateClient();
                 client.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
@@ -192,8 +186,30 @@ namespace Web.Controllers
 
                 _logger.LogInformation("💰 Pago recibido. Status={Status}, ExternalRef={ExternalReference}", status, externalReference);
 
-                // TODO: acá mantenés tu lógica de actualizar venta, descontar stock y enviar mail
-                // ...
+                var venta = await _ventaRepository.GetByExternalReferenceAsync(externalReference);
+                if (venta == null)
+                {
+                    _logger.LogWarning("⚠️ No se encontró venta con ExternalReference={ExternalReference}", externalReference);
+                    return Ok();
+                }
+
+                if (status.Equals("approved", StringComparison.OrdinalIgnoreCase))
+                {
+                    venta.Status = VentaStatus.Pagado;
+                    await _ventaRepository.UpdateAsync(venta);
+                    await EnviarCorreoCompra(venta);
+                    _logger.LogInformation("✅ Venta {VentaId} actualizada a Pagado", venta.Id);
+                }
+                else if (status.Equals("rejected", StringComparison.OrdinalIgnoreCase))
+                {
+                    venta.Status = VentaStatus.Cancelado;
+                    await _ventaRepository.UpdateAsync(venta);
+                    _logger.LogInformation("❌ Venta {VentaId} cancelada (pago rechazado)", venta.Id);
+                }
+                else if (status.Equals("in_process", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogInformation("⏳ Pago en proceso para Venta {VentaId}", venta.Id);
+                }
 
                 return Ok();
             }
@@ -204,6 +220,21 @@ namespace Web.Controllers
             }
         }
 
+        private async Task EnviarCorreoCompra(Venta venta)
+        {
+            try
+            {
+                var subject = "Confirmación de compra";
+                var body = $"Gracias por tu compra. Tu número de pedido es {venta.Id} por un total de {venta.Total:C}.";
 
+                await _emailService.SendEmailAsync(venta.CustomerEmail, subject, body);
+                _logger.LogInformation("📧 Correo de confirmación enviado a {Email}", venta.CustomerEmail);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error enviando correo de confirmación");
+            }
+        }
     }
 }
+
